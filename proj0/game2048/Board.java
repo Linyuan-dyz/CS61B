@@ -93,7 +93,6 @@ public class Board implements Iterable<Tile> {
         }
         Tile tile1 = vtile(col, row, viewPerspective);
         values[tile.col()][tile.row()] = null;
-
         if (tile1 == null) {
             values[pcol][prow] = tile.move(pcol, prow);
             return false;
