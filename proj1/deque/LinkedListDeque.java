@@ -2,12 +2,12 @@ package deque;
 
 public class LinkedListDeque<T> {
 
-    public static class LinkedList<T>{
-        public T item;
-        public LinkedList prev;
-        public LinkedList next;
+    public static class LinkedList<T> {
+        private T item;
+        private LinkedList prev;
+        private LinkedList next;
 
-        LinkedList(T obj, LinkedList pre, LinkedList nex){
+        LinkedList(T obj, LinkedList pre, LinkedList nex) {
             item = obj;
             prev = pre;
             next = nex;
@@ -17,138 +17,110 @@ public class LinkedListDeque<T> {
     private int size;
     private LinkedList<T> sentinel;
 
-    public LinkedListDeque(){
+    public LinkedListDeque() {
         size = 0;
-        sentinel = new LinkedList(114514, null, null);
+        sentinel = new LinkedList(null, null, null);
+        sentinel.next = sentinel;
+        sentinel.prev = sentinel;
     }
-    public LinkedListDeque(T item){
+    public LinkedListDeque(T item) {
         size = 1;
-        LinkedList<T> FirstNode= new LinkedList<>(item, null, null);
-        FirstNode.next = FirstNode;
-        FirstNode.prev = FirstNode;
-        sentinel = new LinkedList(114514, null, FirstNode);
+        sentinel = new LinkedList(null, null, null);
+        LinkedList<T> firstNode = new LinkedList<>(item, sentinel, sentinel);
+        sentinel.next = firstNode;
+        sentinel.prev = firstNode;
     }
 
-    public void addFirst(T item){
+    public void addFirst(T item) {
         size += 1;
-        LinkedList<T> Original_First = sentinel.next;
-        //assume that there is nothing in the linkedlist.
-        LinkedList<T> NewFirst = new LinkedList<>(item, null, null);
-        NewFirst.prev = NewFirst;
-        NewFirst.next = NewFirst;
-        sentinel.next = NewFirst;
-        //if there is something in the linkedlist, then fix it.
-        if (Original_First != null) {
-            LinkedList<T> Last = sentinel.next.prev;
-            NewFirst.prev = Last;
-            NewFirst.next = Original_First;
-            Last.next = NewFirst;
-            Original_First.prev = NewFirst;
-        }
+        LinkedList<T> originalFirst = sentinel.next;
+        LinkedList<T> newFirst = new LinkedList<>(item, sentinel, originalFirst);
+        sentinel.next = newFirst;
+        originalFirst.prev = newFirst;
     }
 
     public void addLast(T item){
         size += 1;
-        LinkedList<T> First = sentinel.next;
-        //assume that there is nothing in the linkedlist.
-        LinkedList<T> NewLast = new LinkedList<>(item, null, null);
-        NewLast.prev = NewLast;
-        NewLast.next = NewLast;
-        sentinel.next = NewLast;
-        //if there is something in the linkedlist, then fix it.
-        //if first is not null, then original_last can not be null.
-        if (First != null){
-            LinkedList<T> Original_Last = First.prev;
-            NewLast.next = First;
-            NewLast.prev = Original_Last;
-            sentinel.next = First;
-            First.prev = NewLast;
-            Original_Last.next = NewLast;
-        }
+        LinkedList<T> originalLast = sentinel.prev;
+        LinkedList<T> newLast = new LinkedList<>(item, originalLast, sentinel);
+        sentinel.prev = newLast;
+        originalLast.next = newLast;
     }
 
-    public int size(){
+    public int size() {
         return size;
     }
 
-    public boolean isEmpty(){
+    public boolean isEmpty() {
         if (size() == 0){
             return true;
         }
         return false;
     }
 
-    public void printDeque(){
+    public void printDeque() {
         if (isEmpty()){
-            return ;
+            return;
         }
-        LinkedList<T> First = sentinel.next;
-        LinkedList<T> p = First;
+        LinkedList<T> p = sentinel.next;
         System.out.print(p.item);
         p = p.next;
-        while (p != First){
+        while (p != sentinel){
             System.out.print(" " + p.item);
             p = p.next;
         }
         System.out.println();
     }
 
-    public T removeFirst(){
-        if(isEmpty()){
+    public T removeFirst() {
+        if (isEmpty()) {
             return null;
         }
         size -= 1;
         LinkedList<T> First = sentinel.next;
-        LinkedList<T> NewFirst = sentinel.next.next;
-        LinkedList<T> Last = sentinel.next.prev;
-        T ret_item = First.item;
-        NewFirst.prev = Last;
-        Last.next = NewFirst;
-        sentinel.next = NewFirst;
-        First = null;
-        return ret_item;
+        LinkedList<T> newFirst = sentinel.next.next;
+        sentinel.next = newFirst;
+        newFirst.prev = sentinel;
+        return First.item;
     }
 
-    public T removeLast(){
-        if(isEmpty()){
+    public T removeLast() {
+        if (isEmpty()) {
             return null;
         }
         size -= 1;
-        LinkedList<T> First = sentinel.next;
-        LinkedList<T> Last = sentinel.next.prev;
-        LinkedList<T> NewLast = sentinel.next.prev.prev;
-        T ret_item = Last.item;
-        First.prev = NewLast;
-        NewLast.next = First;
-        Last = null;
-        return ret_item;
+        LinkedList<T> Last = sentinel.prev;
+        LinkedList<T> newLast = sentinel.prev.prev;
+        sentinel.prev = newLast;
+        newLast.next = sentinel;
+        return Last.item;
     }
 
-    public T get(int index){
-        if (index > size || isEmpty()){
+    public T get(int index) {
+        if (index > size || isEmpty()) {
             return null;
         }
         LinkedList<T> p = sentinel.next;
-        while (index != 0){
+        while (index != 0) {
             p = p.next;
             index -= 1;
         }
         return p.item;
     }
 
-    private T helper_get(int index, LinkedList<T> p){
-        if (index == 0){
+    private T helperGet(int index, LinkedList<T> p) {
+        if (index == 0) {
             return p.item;
         }
         LinkedList<T> np = p.next;
-        return helper_get(index-1, np);
+        return helperGet(index - 1, np);
     }
 
-    public T getRecursive(int index){
-        if(index > size || isEmpty()){
+    public T getRecursive(int index) {
+        if(index > size || isEmpty()) {
             return null;
         }
         LinkedList<T> p = sentinel.next;
-        return helper_get(index, p);
+        return helperGet(index, p);
     }
 }
