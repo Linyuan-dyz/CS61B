@@ -1,6 +1,6 @@
 package deque;
 
-public class LinkedListDeque<T> {
+public class LinkedListDeque<T> implements Deque<T> {
 
     public static class LinkedList<T> {
         private T item;
@@ -49,13 +49,6 @@ public class LinkedListDeque<T> {
 
     public int size() {
         return size;
-    }
-
-    public boolean isEmpty() {
-        if (size() == 0){
-            return true;
-        }
-        return false;
     }
 
     public void printDeque() {

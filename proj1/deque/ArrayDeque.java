@@ -1,6 +1,6 @@
 package deque;
 
-public class ArrayDeque<T> {
+public class ArrayDeque<T> implements Deque<T> {
     private int size;
     private int nextFirst;
     private int nextLast;
@@ -49,12 +49,7 @@ public class ArrayDeque<T> {
         return size;
     }
 
-    public boolean isEmpty() {
-        if (size() == 0) {
-            return true;
-        }
-        return false;
-    }
+
 
     private void reSize(int length) {
         int p = nextFirst + 1;
