@@ -135,4 +135,52 @@ public class ArrayDeque<T> implements Deque<T> {
         }
         return items[p];
     }
+
+    public Iterator<T> iterator() {
+        return new ArrayIterator();
+    }
+
+    public interface Iterator<T> {
+        boolean hasNext();
+        T next();
+    }
+
+    private class ArrayIterator<T> implements Iterator<T> {
+        private int newIndex;
+        public ArrayIterator(){
+            newIndex = 0;
+        }
+        public boolean hasNext(){
+            return size < newIndex;
+        }
+        public T next(){
+            T returnItem = (T) get(newIndex);
+            newIndex += 1;
+            return returnItem;
+        }
+    }
+
+    public boolean equals(Object o) {
+        if (o instanceof ArrayDeque) {
+            ArrayDeque oo = (ArrayDeque) o;
+            if (oo.size() == size) {
+                for(int i=0; i<size; i++) {
+                    int ooFirst = oo.nextFirst + i;
+                    int aoFirst = nextFirst + i;
+                    if (ooFirst >= items.length) {
+                        ooFirst -= items.length;
+                    }
+                    if (aoFirst >= items.length) {
+                        aoFirst -= items.length;
+                    }
+                    if (oo.items[ooFirst] != items[aoFirst]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
 }

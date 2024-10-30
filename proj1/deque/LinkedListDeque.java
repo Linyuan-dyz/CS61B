@@ -116,4 +116,46 @@ public class LinkedListDeque<T> implements Deque<T> {
         LinkedList<T> p = sentinel.next;
         return helperGet(index, p);
     }
+
+    public Iterator<T> iterator() {
+        return new LinkListSetIterator();
+    }
+
+    public interface Iterator<T> {
+        boolean hasNext();
+        T next();
+    }
+    private class LinkListSetIterator implements Iterator<T> {
+        private int newIndex;
+        public LinkListSetIterator() {
+            newIndex = 0;
+        }
+        public boolean hasNext() {
+            return size > newIndex;
+        }
+
+        public T next() {
+            T returnItem = get(newIndex);
+            newIndex += 1;
+            return returnItem;
+        }
+    }
+
+    public boolean equals(Object o) {
+        if (o instanceof LinkedListDeque ) {
+            LinkedListDeque oo = (LinkedListDeque) o;
+            if (oo.size() == size) {
+                LinkedList op = oo.sentinel.next;
+                LinkedList dp = this.sentinel.next;
+                for(int i=0; i<size; i++){
+                    if (dp.item != op.item) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
 }

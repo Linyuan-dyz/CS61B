@@ -8,6 +8,35 @@ import static org.junit.Assert.*;
 public class LinkedListDequeTest {
 
     @Test
+    public void checkIterator() {
+        LinkedListDeque<Integer> test =new LinkedListDeque<> ();
+        for(int i=0; i<10; i++){
+            test.addLast(i);
+        }
+        LinkedListDeque.Iterator<Integer> testIterator = test.iterator();
+        for(int i=0; i<10; i++){
+            if (testIterator.hasNext()) {
+                int next = testIterator.next();
+                assertEquals(i, next);
+            }
+        }
+    }
+
+    @Test
+    public void checkEqual() {
+        LinkedListDeque<Integer> o = new LinkedListDeque<>();
+        LinkedListDeque<Integer> test = new LinkedListDeque<>();
+        o.addFirst(1);
+        test.addFirst(1);
+        o.addFirst(1);
+        test.addFirst(1);
+        o.addFirst(1);
+        test.addFirst(1);
+
+        assertEquals(true, test.equals(o));
+    }
+
+    @Test
     /** Adds a few things to the list, checking isEmpty() and size() are correct,
      * finally printing the results.
      *
