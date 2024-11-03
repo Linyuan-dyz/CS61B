@@ -26,8 +26,8 @@ public class ArrayDequeTest {
 
     @Test
     public void checkEqual(){
-        LinkedListDeque<Integer> o = new LinkedListDeque<>();
-        LinkedListDeque<Integer> test = new LinkedListDeque<>();
+        ArrayDeque<Integer> o = new ArrayDeque<>();
+        ArrayDeque<Integer> test = new ArrayDeque<>();
         o.addFirst(1);
         test.addFirst(1);
         o.addFirst(1);

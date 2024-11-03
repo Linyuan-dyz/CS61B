@@ -142,7 +142,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         if (o == null) {
             return false;
         }
-        if (o.getClass() != this.getClass()) {
+        if (!(o instanceof Deque)) {
             return false;
         }
         LinkedListDeque oo = (LinkedListDeque) o;
@@ -152,7 +152,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         int i=0;
         LinkedList<T> p = sentinel.next;
         while (p != sentinel) {
-            if (p.item != oo.get(i)) {
+            if (!p.item.equals(oo.get(i))) {
                 return false;
             }
             i += 1;

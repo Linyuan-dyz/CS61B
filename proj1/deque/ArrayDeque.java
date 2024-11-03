@@ -147,7 +147,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             newIndex = 0;
         }
         public boolean hasNext(){
-            return size < newIndex;
+            return size > newIndex;
         }
         public T next(){
             T returnItem = (T) get(newIndex);
@@ -160,7 +160,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         if (o == null) {
             return false;
         }
-        if (o.getClass() != this.getClass()) {
+        if (!(o instanceof Deque)) {
             return false;
         }
         ArrayDeque oo = (ArrayDeque) o;
@@ -169,11 +169,11 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         }
         int ap = this.nextFirst + 1;
         int i = 0;
-        while (ap != nextFirst) {
+        while (ap != nextLast) {
             if (ap == items.length) {
                 ap -= items.length;
             }
-            if (items[ap] != oo.get(i)) {
+            if (!items[ap].equals(oo.get(i))) {
                 return false;
             }
             i += 1;
