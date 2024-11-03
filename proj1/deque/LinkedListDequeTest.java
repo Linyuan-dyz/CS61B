@@ -2,6 +2,7 @@ package deque;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
+import java.util.Iterator;
 
 
 /** Performs some basic linked list tests. */
@@ -13,7 +14,7 @@ public class LinkedListDequeTest {
         for(int i=0; i<10; i++){
             test.addLast(i);
         }
-        LinkedListDeque.Iterator<Integer> testIterator = test.iterator();
+        Iterator<Integer> testIterator = test.iterator();
         for(int i=0; i<10; i++){
             if (testIterator.hasNext()) {
                 int next = testIterator.next();

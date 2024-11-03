@@ -1,5 +1,8 @@
 package deque;
 import org.junit.Test;
+
+import java.util.Iterator;
+
 import static org.junit.Assert.*;
 
 
@@ -8,11 +11,11 @@ public class ArrayDequeTest {
 
     @Test
     public void checkIterator() {
-        LinkedListDeque<Integer> test =new LinkedListDeque<> ();
+        ArrayDeque<Integer> test =new ArrayDeque<> ();
         for(int i=0; i<10; i++){
             test.addLast(i);
         }
-        LinkedListDeque.Iterator<Integer> testIterator = test.iterator();
+        Iterator<Integer> testIterator = test.iterator();
         for(int i=0; i<10; i++){
             if (testIterator.hasNext()) {
                 int next = testIterator.next();
