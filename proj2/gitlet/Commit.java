@@ -45,7 +45,7 @@ public class Commit implements Serializable {
     private String commitID;
 
     //reference to parent commit
-    private List<String> parent = new LinkedList<>();
+    private List<String> parent;
 
     //use a TreeMap to cast the path to the file's blobID.
     private TreeMap<String, String> pathToBlobID = new TreeMap<>();
@@ -82,12 +82,33 @@ public class Commit implements Serializable {
         return Utils.join(commitFile, commitID);
     }
 
+    //get the correspond commit by its commitID.
+    public static Commit getCommitFromCommitID(String commitID) {
+        File cf = Utils.join(commitFile, commitID);
+        Commit retCommit = Utils.readObject(cf, Commit.class);
+        return retCommit;
+    }
+
+    //change the date to stander time in order to generate sha1ID
+    private static String dateToTimeStamp(Date date) {
+        DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
+        return dateFormat.format(date);
+    }
+
+    //gengerate sha1ID
+    private String generateID() {
+        return Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
+    }
+
     //the non-argument constructor (init function)
     //bolbID & parent are empty, not null, in case of sha1 error
     public Commit() {
         this.message = "initial commit";
         this.date = new Date(0);
         this.standerTime = dateToTimeStamp(date);
+        List<String> parent = new LinkedList<>();
+        parent.addFirst("1231");
+        this.parent = parent;
         this.commitID = getCommitID();
         this.commitFileName = getCommitFileName();
     }
@@ -106,23 +127,7 @@ public class Commit implements Serializable {
         addStageAfterCommit.clear();
     }
 
-    //get the correspond commit by its commitID.
-    public static Commit getCommitFromCommitID(String commitID) {
-        File cf = Utils.join(commitFile, commitID);
-        Commit retCommit = Utils.readObject(cf, Commit.class);
-        return retCommit;
-    }
 
-    //change the date to stander time in order to generate sha1ID
-    private static String dateToTimeStamp(Date date) {
-        DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
-        return dateFormat.format(date);
-    }
-
-    //gengerate sha1ID
-    private String generateID() {
-        return Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
-    }
 
     //write the commit into commitFileName.
     public void makeCommit() {
