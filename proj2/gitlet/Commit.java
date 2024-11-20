@@ -6,10 +6,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date; // TODO: You'll likely use this in this class
-import java.util.List;
-import java.util.Locale;
-import java.util.TreeMap;
+import java.util.*;
 
 /** Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
@@ -48,7 +45,7 @@ public class Commit implements Serializable {
     private String commitID;
 
     //reference to parent commit
-    private List<String> parent;
+    private List<String> parent = new LinkedList<>();
 
     //use a TreeMap to cast the path to the file's blobID.
     private TreeMap<String, String> pathToBlobID = new TreeMap<>();
