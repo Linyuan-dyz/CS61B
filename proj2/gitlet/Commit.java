@@ -27,8 +27,8 @@ public class Commit implements Serializable {
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided one example for `message`.
      */
-    static final File objectFile = Utils.join(".gitlet", "object");
-    static final File commitFile = Utils.join(".object", "commit");
+    static final File objectFile = Utils.join(Repository.GITLET_DIR, "object");
+    static final File commitFile = Utils.join(objectFile, "commit");
 
     /** The message of this Commit. */
     private String message;
@@ -45,31 +45,33 @@ public class Commit implements Serializable {
     private String commitID;
 
     //reference to parent commit
-    private List<String> parent;
+    private List<String> parent = new LinkedList<>();
 
     //use a TreeMap to cast the path to the file's blobID.
-    private TreeMap<String, String> pathToBlobID = new TreeMap<>();
+    private TreeMap<String, String> pathToBlobID;
 
     //use commitFileName to indicate which file to point, in order to find the specific file.
     //commitFileName is consisted of ".commit" and the unique commitID.
     private File commitFileName;
 
+    //return the commit message.
+    public String getCommitMessage() {
+        return message;
+    }
+
+    //return the commit date(Date).
+    public Date getDate() {
+        return date;
+    }
+
+    //return the commit time(UTC).
+    public String getCommitDate() {
+        return standerTime;
+    }
+
     //return the parent of a commit.
     public List<String> getParent() {
         return parent;
-    }
-
-    //return the updated parent, every time the new commit is implemented, the parent adds it's commitID.
-    private List<String> updateParent() {
-        Commit lastMasterCommit = Repository.getMasterCommit();
-        List<String> newParent = lastMasterCommit.getParent();
-        newParent.addFirst(lastMasterCommit.getCommitID());
-        return newParent;
-    }
-
-    //return the commitID of a commit.
-    public String getCommitID() {
-        return generateID();
     }
 
     //return the TreeMap in Commit.
@@ -82,11 +84,17 @@ public class Commit implements Serializable {
         return Utils.join(commitFile, commitID);
     }
 
-    //get the correspond commit by its commitID.
-    public static Commit getCommitFromCommitID(String commitID) {
-        File cf = Utils.join(commitFile, commitID);
-        Commit retCommit = Utils.readObject(cf, Commit.class);
-        return retCommit;
+    //return the commitID of a commit.
+    public String getCommitID() {
+        return Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
+    }
+
+    //return the updated parent, every time the new commit is implemented, the parent adds it's commitID.
+    private List<String> updateParent() {
+        Commit lastMasterCommit = Repository.getMasterCommit();
+        List<String> newParent = lastMasterCommit.getParent();
+        newParent.addFirst(lastMasterCommit.getCommitID());
+        return newParent;
     }
 
     //change the date to stander time in order to generate sha1ID
@@ -95,9 +103,15 @@ public class Commit implements Serializable {
         return dateFormat.format(date);
     }
 
-    //gengerate sha1ID
-    private String generateID() {
-        return Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
+    private TreeMap<String, String> combineAddAndRemove() {
+        TreeMap<String, String> addTree = Repository.getAddPathToBlobID();
+        TreeMap<String, String> removeTree = Repository.getAllRemovePathToBlobID();
+        Collection removeCollection = removeTree.keySet();
+        Iterator removeIter = removeCollection.iterator();
+        while (removeIter.hasNext()) {
+            addTree.remove(removeIter.next());
+        }
+        return addTree;
     }
 
     //the non-argument constructor (init function)
@@ -106,11 +120,10 @@ public class Commit implements Serializable {
         this.message = "initial commit";
         this.date = new Date(0);
         this.standerTime = dateToTimeStamp(date);
-        List<String> parent = new LinkedList<>();
-        parent.addFirst("1231");
-        this.parent = parent;
+        this.parent = new LinkedList<>();
+        this.pathToBlobID = new TreeMap<>();
         this.commitID = getCommitID();
-        this.commitFileName = getCommitFileName();
+        this.commitFileName = new File(commitFile, commitID);
     }
 
     //the normal constructor (blobID & parent might need to fix)
@@ -118,16 +131,27 @@ public class Commit implements Serializable {
         this.message = message;
         this.date = new Date();
         this.standerTime = dateToTimeStamp(date);
-        this.pathToBlobID = Repository.getAllPathToBlobID();
-        List<String> newParent = updateParent();
-        this.parent = newParent;
-        commitID = generateID();
-        commitFileName = Utils.join(commitFile, commitID);
-        Add addStageAfterCommit = new Add();
-        addStageAfterCommit.clear();
+        this.parent = updateParent();
+        this.pathToBlobID = combineAddAndRemove();
+        commitID = getCommitID();
+        commitFileName = new File(commitFile, commitID);
+        cleanAddFile();
+        cleanRemoveFile();
     }
 
+    //clean addFile after commit.
+    //overwrite addFile with empty treemap.
+    public void cleanAddFile() {
+        File currentFile = Utils.join(Add.addFile);
+        TreeMap<String, String> nullPathToBlobID = new TreeMap<>();
+        Utils.writeObject(currentFile, nullPathToBlobID);
+    }
 
+    public void cleanRemoveFile() {
+        File currentFile = Utils.join(Remove.removeFile);
+        TreeMap<String, String> nullPathToBlobID = new TreeMap<>();
+        Utils.writeObject(currentFile, nullPathToBlobID);
+    }
 
     //write the commit into commitFileName.
     public void makeCommit() {

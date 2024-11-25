@@ -4,16 +4,14 @@ import java.io.File;
 import java.util.TreeMap;
 
 public class Add {
-    static final File addStage = Utils.join(".gitlet", "addStage");
+    static final File addStage = Utils.join(Repository.GITLET_DIR, "addStage");
+    static final File addFile = new File(addStage, "addFile");
 
     //use a TreeMap to cast the path to the file's blobID.
     private TreeMap<String, String> pathToBlobID = new TreeMap<>();
 
-    public Add() {
-
-    }
-
-    /** put blob into pathToBlobID and write the TreeMap into the file.
+    /**judge whether the addFile exists, if it does, continue from the previous TreeMap.
+     *put blob into pathToBlobID and write the TreeMap into the file.
      *if the path doesn't exit, then add it into TreeMap,
      *if the ID is equal to the ID in commit, do nothing,
      *otherwise, overwrite the bolbID.
@@ -22,25 +20,35 @@ public class Add {
         String newPath = blob.getFilePath();
         String newBolbID = blob.getBlobID();
 
+        TreeMap<String, String> returnTreeMap = new TreeMap<>();
+        if (addFile.exists()) {
+            returnTreeMap = Utils.readObject(addFile, TreeMap.class);
+        }
+
         Commit masterCommit = Repository.getMasterCommit();
 
-        if (pathToBlobID.get(newPath) == null) {
-            pathToBlobID.put(newPath, newBolbID);
-        } else if (pathToBlobID.get(newPath) == masterCommit.getTreeMap().get(newPath)){
+        TreeMap<String, String> commitTreeMap = masterCommit.getTreeMap();
+
+        if (!commitTreeMap.isEmpty() && commitTreeMap.containsValue(newBolbID)) {
+            this.pathToBlobID = returnTreeMap;
             return;
-        } else {
-            pathToBlobID.replace(newPath, newBolbID);
         }
+
+        if (returnTreeMap.get(newPath) == null) {
+            returnTreeMap.put(newPath, newBolbID);
+        } else {
+            returnTreeMap.replace(newPath, newBolbID);
+        }
+
+        this.pathToBlobID = returnTreeMap;
     }
 
     public void saveAdd() {
-        Utils.writeContents(addStage, pathToBlobID);
+        Utils.writeObject(addFile, pathToBlobID);
     }
 
-    public void clear() {
-        pathToBlobID.clear();
-        Utils.writeContents(addStage, pathToBlobID);
+    public static void saveAddAfterDelete(TreeMap newMap) {
+        Utils.writeObject(addFile, newMap);
     }
-
 
 }

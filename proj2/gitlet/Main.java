@@ -25,9 +25,38 @@ public class Main {
                 // TODO: handle the `add [filename]` command
                 Repository.makeAdd(args[1]);
                 break;
-            // TODO: FILL THE REST IN
+                // TODO: FILL THE REST IN
             case "commit":
+                if (args[1].isEmpty() || args[1] == null || args[1] == "") {
+                    System.out.println("Please enter a commit message.");
+                    System.exit(0);
+                }
                 Repository.makeCommit(args[1]);
+                break;
+            case "rm":
+                if (args[1].isEmpty() || args[1] == null || args[1] == "") {
+                    System.out.println("Please enter a commit message.");
+                    System.exit(0);
+                }
+                Repository.makeRemove(args[1]);
+                break;
+            case "log":
+                Repository.printAllLog();
+                break;
+            case "global-log":
+                Repository.printAllLog();
+                break;
+            case "find":
+                Repository.find(args[1]);
+                break;
+            case "branch":
+                Repository.createBranch(args[1]);
+                break;
+            case "status":
+                Repository.status();
+                break;
+            case "rm-branch":
+                Repository.deleteBranch(args[1]);
                 break;
         }
     }

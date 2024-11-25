@@ -5,7 +5,7 @@ import java.io.Serializable;
 
 public class Blob implements Serializable {
 
-    static final File blobsFile = Utils.join(".object", "blobs");
+    static final File blobsFile = Utils.join(Commit.objectFile, "blobs");
 
     //fileNameFromPath refers to the file to be stored.
     private File fileNameFromPath;
@@ -13,11 +13,8 @@ public class Blob implements Serializable {
     //blobFileName refers to the file in blobsFile.
     private File blobFileName;
 
-    //fileContent refers to the file content as byte[], which is the result of serializing.
-    private byte[] fileContent;
-
     //fileseq refers to the file content as String.
-    private String fileseq;
+    private String fileSeq;
 
     //filePath is the arg that is passed into function as the path to the file.
     private String filePath;
@@ -32,43 +29,33 @@ public class Blob implements Serializable {
     }
 
     //return the file f by the giving filePath.
-    private File getfileNameFromPath(String filePath) {
-        File f = Utils.join(filePath);
-        return f;
-    }
-
-    //return the file content by fileName
-    private byte[] getfileContent() {
-        byte[] fc = Utils.serialize(fileNameFromPath);
-        return fc;
+    private File getFileNameFromPath(String filePath) {
+        return Utils.join(filePath);
     }
 
     //return the file content as string
-    private String getFileseq() {
-        String fs = Utils.readContentsAsString(fileNameFromPath);
-        return fs;
+    private String getFileSeq() {
+        return Utils.readContentsAsString(fileNameFromPath);
     }
 
     //return the bolbID
     public String getBlobID() {
-        String id = Utils.sha1(filePath, fileseq);
-        return id;
+        return Utils.sha1(filePath, fileSeq);
     }
 
-    private File getBlobFileName() {
-        File blobFileName = Utils.join(blobsFile, blobID);
-        return blobFileName;
+    public File getBlobFileName() {
+        return Utils.join(blobsFile, blobID);
     }
 
     //get the file to make the construct function
     public Blob(String filePath) {
         this.filePath = filePath;
-        this.fileNameFromPath = getfileNameFromPath(filePath);
+        this.fileNameFromPath = getFileNameFromPath(filePath);
+        this.fileSeq = getFileSeq();
         this.blobID = getBlobID();
-        this.blobFileName = getBlobFileName();
-        this.fileContent = getfileContent();
-        this.fileseq = getFileseq();
+        this.blobFileName = new File(blobsFile, blobID);
     }
+
 
     public void updateBlobAndAddStage() {
         Utils.writeObject(blobFileName, this);
