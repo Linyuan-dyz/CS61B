@@ -37,6 +37,9 @@ public class Remove implements Serializable {
         TreeMap commitTree = Repository.getMasterCommit().getTreeMap();
 
         if (!commitTree.isEmpty() && commitTree.get(newPath) != null && (commitTree.get(newPath).equals(newID) || newID.equals(""))) {
+            if (newID.equals("")) {
+                newID = (String) commitTree.get(newPath);
+            }
             if (newBlob.getBlobName().exists()) {
                 newBlob.getBlobName().delete();
             }

@@ -142,7 +142,12 @@ public class Repository {
     }
 
     public static void makeRemove(String path) {
+        File f = Utils.join(Blob.blobs, path);
+        if (!f.exists()) {
+
+        }
         Blob newBlob = new Blob(path);
+
         Remove newRemove = new Remove(newBlob);
         newRemove.saveRemove();
     }
@@ -202,20 +207,20 @@ public class Repository {
         File removeFile = Utils.join(Remove.removeFile);
         if (addFile.exists()) {
             TreeMap<String, String> addTreeMap = Utils.readObject(Add.addFile, TreeMap.class);
-            Collection addCollection = addTreeMap.values();
+            Collection addCollection = addTreeMap.keySet();
             Iterator addIter = addCollection.iterator();
             while (addIter.hasNext()) {
-                System.out.println(Repository.getBlobFromBlobID((String)addIter.next()).getPath());
+                System.out.println(addIter.next());
             }
         }
         System.out.printf("\n");
         System.out.println("=== Removed Files ===");
         if (removeFile.exists()) {
             TreeMap<String, String> removeTreeMap = Utils.readObject(Remove.removeFile, TreeMap.class);
-            Collection removeCollection = removeTreeMap.values();
+            Collection removeCollection = removeTreeMap.keySet();
             Iterator removeIter = removeCollection.iterator();
             while (removeIter.hasNext()) {
-                System.out.println(Repository.getBlobFromBlobID((String)removeIter.next()).getPath());
+                System.out.println(removeIter.next());
             }
         }
         System.out.printf("\n");
