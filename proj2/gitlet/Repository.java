@@ -1,7 +1,9 @@
 package gitlet;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.TreeMap;
 
 import static gitlet.Utils.*;
 
@@ -17,6 +19,17 @@ public class Repository {
     /**
      * TODO: add instance variables here.
      *
+     * .gitlet
+     *      |-- objects
+     *              |-- commit
+     *              |-- blob
+     *      |-- refs
+     *              |--headsFile
+     *                  |-- masterFile
+     *      |-- stages
+     *              |-- addStage
+     *              |-- removeStage
+     *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided two examples for you.
@@ -26,89 +39,46 @@ public class Repository {
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-
+    /** The objects directory. */
+    public static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
+    /** The refs directory. */
+    public static final File REFS_DIR = join(GITLET_DIR, "refs");
+    /** The stages directory. */
+    public static final File STAGES_DIR = join(GITLET_DIR, "stages");
     /* TODO: fill in the rest of this class. */
-    /*
-    * repository structure:
-    * .gitlet --
-    *       | --object  √
-    *               | --commit  √
-    *               | --blobs   √
-    *       | --refs    √
-    *               | --heads   √
-    *                   | --master  √
-    *       | --addStage        √
-    *       | --removeStage     √
-    *       | -- HEAD
-    * */
-    private static void setupPersistence(){
+
+    public static void setUpPresistance() {
+        CWD.mkdir();
         GITLET_DIR.mkdir();
-        Add.addStage.mkdir();
-        Commit.objectFile.mkdir();
-        Commit.commitFile.mkdir();
-        Remove.removeStage.mkdir();
-        Blob.blobsFile.mkdir();
-        Head.refsFile.mkdir();
+        OBJECTS_DIR.mkdir();
+        Commit.commits.mkdir();
+        Blob.blobs.mkdir();
+        REFS_DIR.mkdir();
         Head.headsFile.mkdir();
         Head.masterFile.mkdir();
+        STAGES_DIR.mkdir();
+        Add.addStage.mkdir();
+        Remove.removeStage.mkdir();
     }
 
-    //get the correspond commit by its commitID.
-    public static Commit getCommitFromCommitID(String commitID) {
-        File cf = Utils.join(Commit.commitFile, commitID);
-        Commit retCommit = Utils.readObject(cf, Commit.class);
-        return retCommit;
+    public static Head getMaster() {
+        String[] masterContent = Head.masterFile.list();
+        String masterName = masterContent[0];
+        return Utils.readObject(Utils.join(Head.masterFile, masterName), Head.class);
     }
 
-    //assume that there is a head in the master file
-    public static File getMasterFileName() {
-        String[] dir = Head.masterFile.list();
-        return Utils.join(Head.masterFile, dir[0]);
-    }
-
-    public static Head getMasterHead() {
-        File masterFile = getMasterFileName();
-        Head masterHead = Utils.readObject(masterFile, Head.class);
-        return masterHead;
-    }
-
-    //get the master commit that the master pointer point to.
     public static Commit getMasterCommit() {
-
-        //get the master pointer
-        File masterFileName = Utils.join(getMasterFileName());
-
-        //get the commitID that the master pointer point to.
-        String commitID = Utils.readObject(masterFileName, Head.class).getCommitID();
-
-        //get the commit the commitID refers to.
-        Commit masterCommit = getCommitFromCommitID(commitID);
-
-        Collection c = masterCommit.getTreeMap().values();
-        Iterator iter = c.iterator();
-        while (iter.hasNext())  {
-            System.out.println(iter.next());
-        }
-
+        Head master = getMaster();
+        Commit masterCommit = Utils.readObject(Utils.join(Commit.commits, master.getCommitID()), Commit.class);
         return masterCommit;
     }
 
-    //get the branch commit that the master pointer point to.
-    public static Commit getBranchCommit(String branchName) {
-
-        //get the master pointer
-        File branchFileName = Utils.join(Head.getBranchFileName(branchName));
-
-        //get the commitID that the master pointer point to.
-        String commitID = Utils.readObject(branchFileName, Head.class).getCommitID();
-
-        //get the commit the commitID refers to.
-        Commit branchCommit = getCommitFromCommitID(commitID);
-
-        return branchCommit;
+    public static Commit getCommitFromCommitID(String commitID) {
+        File cf = Utils.join(Commit.commits, commitID);
+        return Utils.readObject(cf, Commit.class);
     }
 
-    public static TreeMap<String, String> getAddPathToBlobID() {
+    public static TreeMap<String, String> getAddTree() {
         TreeMap<String, String> emptyMap = new TreeMap<>();
         if (!Add.addFile.exists()) {
             return emptyMap;
@@ -117,7 +87,7 @@ public class Repository {
         return newTreeMap;
     }
 
-    public static TreeMap<String, String> getAllRemovePathToBlobID() {
+    public static TreeMap<String, String> getRemoveTree() {
         TreeMap<String, String> emptyMap = new TreeMap<>();
         if (!Remove.removeFile.exists()) {
             return emptyMap;
@@ -126,92 +96,86 @@ public class Repository {
         return newTreeMap;
     }
 
+    public static Blob getBlobFromBlobID(String blobID) {
+        File blobFileName = Utils.join(Blob.blobs, blobID);
+        return Utils.readObject(blobFileName, Blob.class);
+    }
+
     public static void makeInit() {
         File gitletDir = Utils.join(CWD, ".gitlet");
         if (gitletDir.exists()) {
             System.out.println("A Gitlet version-control system already exists in the current directory.");
             System.exit(0);
         }
-        setupPersistence();
+        setUpPresistance();
         Commit init = new Commit();
-        init.makeCommit();
-        Head newHead = new Head(init);
-        newHead.saveHeadNotMaster();
-        newHead.setMaster("master");
-
+        init.saveCommit();
+        Head master = new Head(init);
+        master.saveInMaster();
     }
 
-    public static void makeAdd(String fileName) {
-        File f = Utils.join(fileName);
+    public static void makeAdd(String path) {
+        File f = Utils.join(path);
         if (!f.exists()) {
             System.out.println("File does not exist.");
             System.exit(0);
         }
-        Blob newBlob = new Blob(fileName);
-        newBlob.updateBlobAndAddStage();
+        Blob newBlob = new Blob(path);
+        newBlob.saveBlob();
+        Add newAdd = new Add(newBlob);
+        newAdd.saveAdd();
     }
 
-    /** create a new commit with the given message.
-     *  get the master head name, and use this name & new commit to create a new head.
-     *  save this new head in the headsFile
-     *  change it into new masterHead (including deleting previous master head and deleting the head in the headsFile)
-     *  ATTENTION: commit doesn't change the head's name, it's still the old head, just change the commit.
-     * */
     public static void makeCommit(String message) {
-        if (getAddPathToBlobID().isEmpty()) {
+        TreeMap addTree =  getAddTree();
+        TreeMap removeTree = getRemoveTree();
+        if (addTree.isEmpty() && removeTree.isEmpty()) {
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }
         Commit newCommit = new Commit(message);
-        newCommit.makeCommit();
-
-        Head masterHead = getMasterHead();
-        String masterHeadName = masterHead.getBranchName();
-        Head newHead = new Head(masterHeadName, newCommit);
-        newHead.saveHeadNotMaster();
-        newHead.setMaster(masterHeadName);
+        newCommit.saveCommit();
+        newCommit.cleanAddFile();
+        newCommit.cleanRemoveFile();
+        Head master = new Head(newCommit);
+        master.saveInMaster();
     }
 
-    public static void makeRemove(String fileName) {
-        File f = Utils.join(fileName);
-        if (!f.exists()) {
-            System.out.println("File does not exist.");
-            System.exit(0);
-        }
-        Blob newBlob = new Blob(fileName);
+    public static void makeRemove(String path) {
+        Blob newBlob = new Blob(path);
         Remove newRemove = new Remove(newBlob);
         newRemove.saveRemove();
     }
 
     //print the single log message of current commit.
     public static void printLog(Commit currentCommit) {
-            System.out.println("===");
-            System.out.println("commit " + currentCommit.getCommitID());
-            System.out.println("Date: " + currentCommit.getCommitDate());
-            System.out.println(currentCommit.getCommitMessage());
-            System.out.printf("\n");
+        System.out.println("===");
+        System.out.println("commit " + currentCommit.getCommitID());
+        System.out.println("Date: " + currentCommit.getCommitDate());
+        System.out.println(currentCommit.getCommitMessage());
+        System.out.printf("\n");
     }
 
     //print all log message by sequence of all commits.
     public static void printAllLog() {
-        Commit headCommit = getMasterCommit();
-        printLog(headCommit);
+        Commit masterCommit = getMasterCommit();
+        printLog(masterCommit);
         Commit currentCommit;
-        for(String currentCommitID: headCommit.getParent()) {
+        for(String currentCommitID: masterCommit.getParent()) {
             currentCommit = getCommitFromCommitID(currentCommitID);
             printLog(currentCommit);
         }
     }
 
     public static void find(String message) {
-        Commit headCommit = getMasterCommit();
+        Commit masterCommit = getMasterCommit();
         Commit currentCommit;
-        Boolean flag = false;
-        if (headCommit.getCommitMessage().equals(message)) {
-            System.out.printf(headCommit.getCommitID() + "\n");
+        boolean flag = false;
+        if (masterCommit.getCommitMessage().equals(message)) {
+            System.out.printf(masterCommit.getCommitID() + "\n");
             flag = true;
         }
-        for(String currentCommitID : headCommit.getParent()) {
+        for(String currentCommitID : masterCommit.getParent()) {
             currentCommit = getCommitFromCommitID(currentCommitID);
             if (currentCommit.getCommitMessage().equals(message)) {
                 System.out.printf(currentCommit.getCommitID() + "\n");
@@ -224,7 +188,6 @@ public class Repository {
     }
 
     //finished the front 3 items, hasn't finished the last two sections.
-
     public static void status() {
         //problems here, Head.setMaster() neeed to finish.
         System.out.println("=== Branches ===");
@@ -242,7 +205,7 @@ public class Repository {
             Collection addCollection = addTreeMap.values();
             Iterator addIter = addCollection.iterator();
             while (addIter.hasNext()) {
-                System.out.println(Blob.getBlobFromBlobID((String)addIter.next()).getFilePath());
+                System.out.println(Repository.getBlobFromBlobID((String)addIter.next()).getPath());
             }
         }
         System.out.printf("\n");
@@ -252,7 +215,7 @@ public class Repository {
             Collection removeCollection = removeTreeMap.values();
             Iterator removeIter = removeCollection.iterator();
             while (removeIter.hasNext()) {
-                System.out.println(Blob.getBlobFromBlobID((String)removeIter.next()).getFilePath());
+                System.out.println(Repository.getBlobFromBlobID((String)removeIter.next()).getPath());
             }
         }
         System.out.printf("\n");
@@ -262,34 +225,4 @@ public class Repository {
         System.out.printf("\n");
     }
 
-    public static void createBranch(String branchName) {
-        if (Utils.join(Head.headsFile, branchName).exists() || Utils.join(Head.masterFile, branchName).exists()) {
-            System.out.println("A branch with that name already exists.");
-        }
-        Commit headCommit = getMasterCommit();
-        Head newBranch = new Head(branchName, headCommit);
-        newBranch.saveHeadNotMaster();
-    }
-
-    public static void deleteBranch(String branchName) {
-        boolean flag = false;
-        File masterHeadFile = getMasterFileName();
-        Head masterHead = Utils.readObject(masterHeadFile, Head.class);
-        String masterName = masterHead.getBranchName();
-        if (masterName == branchName) {
-            System.out.println("Cannot remove the current branch.");
-        } else {
-            for(String headName : Utils.plainFilenamesIn(Head.headsFile)) {
-                if (headName == branchName) {
-                    File targetFile = Utils.join(Head.headsFile, branchName);
-                    //Utils.restrictedDelete(targetFile);
-                    targetFile.delete();
-                    flag = true;
-                }
-            }
-            if (!flag) {
-                System.out.println("A branch with that name does not exist.");
-            }
-        }
-    }
 }

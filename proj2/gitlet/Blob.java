@@ -3,69 +3,61 @@ package gitlet;
 import java.io.File;
 import java.io.Serializable;
 
+import static gitlet.Utils.join;
+
 public class Blob implements Serializable {
+    /** The blobs directory. */
+    public static final File blobs = join(Repository.OBJECTS_DIR, "blobs");
 
-    static final File blobsFile = Utils.join(Commit.objectFile, "blobs");
-
-    //fileNameFromPath refers to the file to be stored.
-    private File fileNameFromPath;
-
-    //blobFileName refers to the file in blobsFile.
-    private File blobFileName;
-
-    //fileseq refers to the file content as String.
-    private String fileSeq;
-
-    //filePath is the arg that is passed into function as the path to the file.
-    private String filePath;
-
+    //originalFile refers to the file to be stored.
+    private File originalFile;
+    //blobName refers to the file in blobsFile.
+    private File blobName;
+    //content refers to the file content as String.
+    private String content;
+    //path is the arg that is passed into function as the path to the file.
+    private String path;
     //blobID refers to the sha1 sequence of the file
     //it needs filePath and fileseq to consist the blobID
     private String blobID;
 
     //return the filePath
-    public String getFilePath() {
-        return filePath;
+    public String getPath() {
+        return path;
     }
-
     //return the file f by the giving filePath.
-    private File getFileNameFromPath(String filePath) {
-        return Utils.join(filePath);
+    private File getOriginalFile() {
+        return originalFile;
     }
-
     //return the file content as string
-    private String getFileSeq() {
-        return Utils.readContentsAsString(fileNameFromPath);
+    private String getContent() {
+        return content;
     }
-
     //return the bolbID
     public String getBlobID() {
-        return Utils.sha1(filePath, fileSeq);
+        return blobID;
+    }
+    public File getBlobName() {
+        return blobName;
     }
 
-    public File getBlobFileName() {
-        return Utils.join(blobsFile, blobID);
+    /*create a new blob and create the correspond file*/
+    //if the original file doesn't exist, put "" into content.
+    public Blob(String path) {
+        this.path = path;
+        this.originalFile = Utils.join(path);
+        if (originalFile.exists()) {
+            this.content = Utils.readContentsAsString(originalFile);
+            this.blobID = Utils.sha1(path, content);
+        } else {
+            this.content = "";
+            this.blobID = "";
+        }
+        this.blobName = new File(blobs, blobID);
     }
 
-    //get the file to make the construct function
-    public Blob(String filePath) {
-        this.filePath = filePath;
-        this.fileNameFromPath = getFileNameFromPath(filePath);
-        this.fileSeq = getFileSeq();
-        this.blobID = getBlobID();
-        this.blobFileName = new File(blobsFile, blobID);
-    }
-
-
-    public void updateBlobAndAddStage() {
-        Utils.writeObject(blobFileName, this);
-        Add newAdd = new Add(this);
-        newAdd.saveAdd();
-    }
-
-    public static Blob getBlobFromBlobID(String blobID) {
-        File blobFileName = Utils.join(blobsFile, blobID);
-        Blob blob = Utils.readObject(blobFileName, Blob.class);
-        return blob;
+    /*save the correspone blob file in the blobs*/
+    public void saveBlob() {
+        Utils.writeObject(blobName, this);
     }
 }
