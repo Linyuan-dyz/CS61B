@@ -43,6 +43,23 @@ public class Main {
             case "status":
                 Repository.status();
                 break;
+            case "branch":
+                Repository.createBranch(args[1]);
+                break;
+            case "rm-branch":
+                Repository.removeBranch(args[1]);
+                break;
+            case "checkout":
+                if (args[1].equals("--")) {
+                    Repository.checkoutFile(args[2]);
+                } else if (args[1].length() == 40) {
+                    if (args[2].equals("--")) {
+                        Repository.checkoutFileWithCommitID(args[1], args[3]);
+                    }
+                } else {
+                    Repository.checkoutBranch(args[1]);
+                }
+                break;
         }
     }
 }

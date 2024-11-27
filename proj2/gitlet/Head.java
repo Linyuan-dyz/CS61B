@@ -60,11 +60,13 @@ public class Head implements Serializable {
     public void setMaster() {
 
         Head master = Repository.getMaster();
-        master.getMasterName().delete();
-        Utils.writeObject(master.getHeadName(), master);
+        Utils.join(masterFile, master.getBranchName()).delete();
+        //master.getMasterName().delete();
+        master.saveInHeads();
 
-        this.getHeadName().delete();
-        Utils.writeObject(this.getMasterName(), this);;
+        Utils.join(headsFile, this.getBranchName()).delete();
+        //this.getHeadName().delete();
+        this.saveInMaster();
     }
 
 

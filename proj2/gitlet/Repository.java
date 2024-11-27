@@ -69,8 +69,10 @@ public class Repository {
 
     public static Commit getMasterCommit() {
         Head master = getMaster();
-        Commit masterCommit = Utils.readObject(Utils.join(Commit.commits, master.getCommitID()), Commit.class);
-        return masterCommit;
+        return Utils.readObject(Utils.join(Commit.commits, master.getCommitID()), Commit.class);
+    }
+    public static Head getBranch(String branchName) {
+        return Utils.readObject(Utils.join(Head.headsFile, branchName), Head.class);
     }
 
     public static Commit getCommitFromCommitID(String commitID) {
@@ -135,19 +137,15 @@ public class Repository {
         }
         Commit newCommit = new Commit(message);
         newCommit.saveCommit();
-        newCommit.cleanAddFile();
-        newCommit.cleanRemoveFile();
-        Head master = new Head(newCommit);
+        Commit.cleanAddFile();
+        Commit.cleanRemoveFile();
+        Head originalMaster = getMaster();
+        Head master = new Head(originalMaster.getBranchName(), newCommit);
         master.saveInMaster();
     }
 
     public static void makeRemove(String path) {
-        File f = Utils.join(Blob.blobs, path);
-        if (!f.exists()) {
-
-        }
         Blob newBlob = new Blob(path);
-
         Remove newRemove = new Remove(newBlob);
         newRemove.saveRemove();
     }
@@ -189,6 +187,7 @@ public class Repository {
         }
         if (!flag) {
             System.out.println("Found no commit with that message.");
+            System.exit(0);
         }
     }
 
@@ -228,6 +227,101 @@ public class Repository {
         System.out.printf("\n");
         System.out.println("=== Untracked Files ===");
         System.out.printf("\n");
+    }
+
+    public static void createBranch(String brancheName) {
+        if (Utils.join(Head.headsFile, brancheName).exists() || Utils.join(Head.masterFile, brancheName).exists()) {
+            System.out.println("A branch with that name already exists.");
+            System.exit(0);
+        }
+        Commit masterCommit = getMasterCommit();
+        Head newHead = new Head(brancheName, masterCommit);
+        newHead.saveInHeads();
+    }
+
+    public static void removeBranch(String branchName) {
+        if (getMaster().getBranchName().equals(branchName)) {
+            System.out.println("Cannot remove the current branch.");
+            System.exit(0);
+        }
+        boolean flag = false;
+        Collection c = Utils.plainFilenamesIn(Head.headsFile);
+        Iterator headIter = c.iterator();
+        while (headIter.hasNext()) {
+            if (headIter.next().equals(branchName)) {
+                Utils.join(Head.headsFile, branchName).delete();
+                flag = true;
+            }
+        }
+        if (!flag) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+    }
+
+    //Takes the version of the file as it exists in the head commit and puts it in the working directory
+    //if the file isn't in the commit tree, error,
+    //otherwise, get the blobID and find out the blob, write the content into the original file path.
+    public static void checkoutFile(String fileName) {
+        Commit masterCommit = getMasterCommit();
+        TreeMap masterCommitTree = masterCommit.getTreeMap();
+        if (!masterCommitTree.containsKey(fileName)) {
+            System.out.println("File does not exist in that commit.");
+            System.exit(0);
+        }
+        String fileBlobID = (String) masterCommitTree.get(fileName);
+        Blob fileBlob = getBlobFromBlobID(fileBlobID);
+        Utils.writeContents(Utils.join(fileName), fileBlob.getContentAsByte());
+    }
+
+    public static void checkoutFileWithCommitID(String targetCommitID, String fileName) {
+        File targetCommitFile = Utils.join(Commit.commits, targetCommitID);
+        if (!targetCommitFile.exists()) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
+        Commit targetCommit = getCommitFromCommitID(targetCommitID);
+        TreeMap targetCommitTree = targetCommit.getTreeMap();
+        if (!targetCommitTree.containsKey(fileName)) {
+            System.out.println("File does not exist in that commit.");
+            System.exit(0);
+        }
+        String fileBlobID = (String) targetCommitTree.get(fileName);
+        Blob fileBlob = getBlobFromBlobID(fileBlobID);
+        Utils.writeContents(Utils.join(fileName), fileBlob.getContentAsByte());
+    }
+
+    public static void checkoutBranch(String branchName) {
+        if (getMaster().getBranchName().equals(branchName)) {
+            System.out.println("No need to checkout the current branch.");
+            System.exit(0);
+        }
+        if (!Utils.join(Head.headsFile, branchName).exists()) {
+            System.out.println("No such branch exists.");
+            System.exit(0);
+        }
+        if (!getAddTree().isEmpty() || CWD.length() > 1) {
+            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.exit(0);
+        }
+        //delete add, then write new.(might be wrong idea?)
+        Collection c = Utils.plainFilenamesIn(CWD);
+        Iterator CWDIter = c.iterator();
+        while (CWDIter.hasNext()) {
+            Utils.join((String) CWDIter.next()).delete();
+        }
+        Head newHead = getBranch(branchName);
+        newHead.setMaster();
+        Commit newCommit = getCommitFromCommitID(newHead.getCommitID());
+        TreeMap newCommitTree = newCommit.getTreeMap();
+        Collection newBlobIDs = newCommitTree.values();
+        Iterator newBlobID = newBlobIDs.iterator();
+        while (newBlobID.hasNext()) {
+            Blob newBlob = getBlobFromBlobID((String) newBlobID.next());
+            Utils.writeContents(Utils.join(CWD, newBlob.getPath()), newBlob.getContentAsByte());
+        }
+        Commit.cleanAddFile();
+        Commit.cleanRemoveFile();
     }
 
 }

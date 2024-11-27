@@ -18,8 +18,12 @@ public class Remove implements Serializable {
         this.pathToID = new TreeMap<>();
     }
 
+    public Remove(TreeMap newRemoveTree) {
+        this.pathToID = newRemoveTree;
+    }
+
     /** Firstly, figure out whether blob is in the front commit, if it does,
-     *  add it into removeFile, and delete its local file. if it doesn't,
+     *  add it into removeFile, and delete its CWD file. if it doesn't,
      *  check whether it is in the addFile, if it does,
      *  remove it from the addFile. if it doesn't,
      *  print the error message "No reason to remove the file.", if it does,
@@ -40,26 +44,22 @@ public class Remove implements Serializable {
             if (newID.equals("")) {
                 newID = (String) commitTree.get(newPath);
             }
-            if (newBlob.getBlobName().exists()) {
-                newBlob.getBlobName().delete();
+
+            if (Utils.join(newPath).exists()) {
+                Utils.join(newPath).delete();
             }
             this.pathToID.put(newPath, newID);
             return;
         }
         //continue from here.
-
         TreeMap addTreeMap = Repository.getAddTree();
         if (addTreeMap.containsValue(newID)) {
             addTreeMap.remove(newPath, newID);
             Add addAfterRemove = new Add(addTreeMap);
             addAfterRemove.saveAdd();
-            if (newBlob.getBlobName().exists()) {
-                newBlob.getBlobName().delete();
-            }
         } else {
             System.out.println("No reason to remove the file.");
         }
-
         this.pathToID = originalTreeMap;
     }
 

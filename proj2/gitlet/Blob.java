@@ -13,8 +13,10 @@ public class Blob implements Serializable {
     private File originalFile;
     //blobName refers to the file in blobsFile.
     private File blobName;
-    //content refers to the file content as String.
-    private String content;
+    //contentAsString refers to the file content as String.
+    private String contentAsString;
+    //contentAsByte refers to the file content as byte.
+    private byte[] contentAsByte;
     //path is the arg that is passed into function as the path to the file.
     private String path;
     //blobID refers to the sha1 sequence of the file
@@ -26,12 +28,16 @@ public class Blob implements Serializable {
         return path;
     }
     //return the file f by the giving filePath.
-    private File getOriginalFile() {
+    public File getOriginalFile() {
         return originalFile;
     }
     //return the file content as string
-    private String getContent() {
-        return content;
+    public String getContentAsString() {
+        return contentAsString;
+    }
+    //return the file content as byte.
+    public byte[] getContentAsByte() {
+        return contentAsByte;
     }
     //return the bolbID
     public String getBlobID() {
@@ -47,10 +53,12 @@ public class Blob implements Serializable {
         this.path = path;
         this.originalFile = Utils.join(path);
         if (originalFile.exists()) {
-            this.content = Utils.readContentsAsString(originalFile);
-            this.blobID = Utils.sha1(path, content);
+            this.contentAsString = Utils.readContentsAsString(originalFile);
+            this.contentAsByte = Utils.readContents(originalFile);
+            this.blobID = Utils.sha1(path, contentAsString);
         } else {
-            this.content = "";
+            this.contentAsString = "";
+            this.contentAsByte = null;
             this.blobID = "";
         }
         this.blobName = new File(blobs, blobID);

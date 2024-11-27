@@ -101,12 +101,12 @@ public class Commit implements Serializable {
         Utils.writeObject(commitName, this);
     }
 
-    public void cleanAddFile() {
+    public static void cleanAddFile() {
         Add newAdd = new Add();
         newAdd.saveAdd();
     }
 
-    public void cleanRemoveFile() {
+    public static void cleanRemoveFile() {
         Remove newRemove = new Remove();
         newRemove.saveRemove();
     }

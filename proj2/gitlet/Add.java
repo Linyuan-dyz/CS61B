@@ -27,6 +27,14 @@ public class Add implements Serializable {
         String newPath = newBlob.getPath();
         String newID = newBlob.getBlobID();
 
+        TreeMap newRemoveTree = Repository.getRemoveTree();
+        if (newRemoveTree.containsValue(newID)) {
+            newRemoveTree.remove(newPath, newID);
+            Remove newRemove = new Remove(newRemoveTree);
+            newRemove.saveRemove();
+            return;
+        }
+
         //get the masterCommit tree, and judge whether it contains newPath and newBlobID.
         TreeMap commitTree = Repository.getMasterCommit().getTreeMap();
         if (!commitTree.isEmpty() && commitTree.get(newPath) != null && commitTree.get(newPath).equals(newID)) {
