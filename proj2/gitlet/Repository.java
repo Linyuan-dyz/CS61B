@@ -1,6 +1,7 @@
 package gitlet;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -321,15 +322,21 @@ public class Repository {
     }
 
     //check whether files in CWD are all tracked.
-    public static void checkCWDFileTracked() {
+    public static void checkCWDFileTracked(String branchName) {
         checkGitletRepository();
         Commit currentCommit = getMasterCommit();
         TreeMap currentCommitTree = currentCommit.getTreeMap();
 
+        Head branch = getBranch(branchName);
+        String branchCommitID = branch.getCommitID();
+        Commit branchCommit = getCommitFromCommitID(branchCommitID);
+        TreeMap branchCommitTree = branchCommit.getTreeMap();
+
         Collection c = Utils.plainFilenamesIn(CWD);
         Iterator CWDIter = c.iterator();
         while (CWDIter.hasNext()) {
-            if (!currentCommitTree.containsKey(CWDIter.next())) {
+            String fileName = (String) CWDIter.next();
+            if (!currentCommitTree.containsKey(fileName) && branchCommitTree.containsKey(fileName)) {
                 System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
             }
@@ -374,7 +381,7 @@ public class Repository {
         checkGitletRepository();
 
         //check whether files in CWD are all tracked.
-        checkCWDFileTracked();
+        checkCWDFileTracked(branchName);
 
         //go through CWD, check the path
         //go through commitTree, check the path.
@@ -391,12 +398,16 @@ public class Repository {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
-        //check whether files in CWD are all tracked.
-        checkCWDFileTracked();
 
         Head master = getMaster();
         String masterName = master.getBranchName();
         Head newMaster = new Head(masterName, targetCommit);
+
+        Head tempMaster = new Head("tempMaster", targetCommit);
+        tempMaster.saveInHeads();
+        //check whether files in CWD are all tracked.
+        checkCWDFileTracked("tempMaster");
+        Utils.join(Head.headsFile, "tempMaster").delete();
         newMaster.saveInMaster();
         //go through CWD, check the path
         //go through commitTree, check the path.
@@ -404,7 +415,6 @@ public class Repository {
 
         Commit.cleanAddFile();
         Commit.cleanRemoveFile();
-
     }
 
     public static String getSplitPointID(String branchName) {
@@ -437,12 +447,10 @@ public class Repository {
             }
         }
         return null;
-
-
     }
 
     public static void getMerge(String branchName) {
-        checkCWDFileTracked();
+        checkCWDFileTracked(branchName);
         if (!getAddTree().isEmpty() || !getRemoveTree().isEmpty()) {
             System.out.println("You have uncommitted changes.");
             return;
@@ -561,24 +569,56 @@ public class Repository {
                     makeAdd((String) branchMap.get(allID));
                 } else {
                     //correspond to situation 8, conflict.
-
+                    File conflictFileInMaster = Utils.join(Blob.blobs, masterID);
+                    File conflictFileInBranch = Utils.join(Blob.blobs, allID);
+                    Blob conflictBlobInMaster = getBlobFromBlobID(masterID);
+                    Blob conflictBlobInBranch = getBlobFromBlobID(allID);
+                    String masterContent = "";
+                    if (conflictFileInMaster.exists()) {
+                        masterContent = new String(conflictBlobInMaster.getContentAsByte(), StandardCharsets.UTF_8);
+                    }
+                    String branchContent = new String(conflictBlobInBranch.getContentAsByte(), StandardCharsets.UTF_8);
+                    String newContent = "<<<<<<< HEAD\n" +
+                            masterContent +
+                            "=======\n" +
+                            branchContent +
+                            ">>>>>>>";
+                    //only exist branch file, overwrite the content and stage it.
+                    Utils.writeContents(Utils.join(filePath), newContent);
                     conflict = true;
-
                 }
             }
 
+            /*
             //correspond to situation 8, conflict.
             if (masterMap.containsKey(allID) && !branchMap.containsKey(allID) && !spiltMap.containsKey(allID)) {
                 String filePath = (String) masterMap.get(allID);
                 String branchID = (String) branchTree.get(filePath);
                 String spiltID = (String) spiltTree.get(filePath);
                 if (masterTree.get(filePath) != null && branchID == null && spiltID == null) {
-
+                    //stays empty
                 } else {
                     //correspond to situation 8, conflict.
+                    File conflictFileInMaster = Utils.join(Blob.blobs, allID);
+                    Blob conflictBlobInMaster = getBlobFromBlobID(allID);
+                    File conflictFileInBranch = Utils.join(Blob.blobs, branchID);
+                    Blob conflictBlobInBranch = getBlobFromBlobID(branchID);
+                    String branchContent = "";
+                    if (conflictFileInBranch.exists()) {
+                        branchContent = new String(conflictBlobInBranch.getContentAsByte(), StandardCharsets.UTF_8);
+                    }
+                    String masterContent = new String(conflictBlobInMaster.getContentAsByte(), StandardCharsets.UTF_8);
+                    String newContent = "<<<<<<< HEAD\n" +
+                            masterContent + "\n" +
+                            "=======\n" +
+                            branchContent + "\n" +
+                            ">>>>>>>";
+                    //masterFile must exist.
+                    Utils.writeContents(conflictFileInMaster, newContent);
                     conflict = true;
                 }
             }
+             */
 
             //correspond to situation 6, remove the file.
             if (masterMap.containsKey(allID) && !branchMap.containsKey(allID) && spiltMap.containsKey(allID)) {
@@ -587,12 +627,10 @@ public class Repository {
                     makeRemove((String) masterMap.get(allID));
                 }
             }
-
         }
         String commitMessage = "Merged " + branchName + " into " + getMaster().getBranchName() + ".";
         if (conflict) {
             System.out.println("Encountered a merge conflict.");
-            Commit mergeCommit = new Commit(commitMessage);
         }
 
         makeCommit(commitMessage);
