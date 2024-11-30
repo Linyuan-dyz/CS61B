@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeMap;
 
@@ -72,11 +73,21 @@ public class Repository {
         return Utils.readObject(Utils.join(Commit.commits, master.getCommitID()), Commit.class);
     }
     public static Head getBranch(String branchName) {
-        return Utils.readObject(Utils.join(Head.headsFile, branchName), Head.class);
+        if (Utils.join(Head.masterFile, branchName).exists()) {
+            return Utils.readObject(Utils.join(Head.masterFile, branchName), Head.class);
+        } else if (Utils.join(Head.headsFile, branchName).exists()){
+            return Utils.readObject(Utils.join(Head.headsFile, branchName), Head.class);
+        } else {
+            return null;
+        }
     }
 
+    //return commit by commitID, if there is no commit correspond ID, return null.
     public static Commit getCommitFromCommitID(String commitID) {
         File cf = Utils.join(Commit.commits, commitID);
+        if (!cf.exists()) {
+            return null;
+        }
         return Utils.readObject(cf, Commit.class);
     }
 
@@ -103,6 +114,14 @@ public class Repository {
         return Utils.readObject(blobFileName, Blob.class);
     }
 
+    public static void checkGitletRepository() {
+        File gitletDir = Utils.join(CWD, ".gitlet");
+        if (!gitletDir.exists()) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
+    }
+
     public static void makeInit() {
         File gitletDir = Utils.join(CWD, ".gitlet");
         if (gitletDir.exists()) {
@@ -117,11 +136,6 @@ public class Repository {
     }
 
     public static void makeAdd(String path) {
-        File f = Utils.join(path);
-        if (!f.exists()) {
-            System.out.println("File does not exist.");
-            System.exit(0);
-        }
         Blob newBlob = new Blob(path);
         newBlob.saveBlob();
         Add newAdd = new Add(newBlob);
@@ -129,12 +143,6 @@ public class Repository {
     }
 
     public static void makeCommit(String message) {
-        TreeMap addTree =  getAddTree();
-        TreeMap removeTree = getRemoveTree();
-        if (addTree.isEmpty() && removeTree.isEmpty()) {
-            System.out.println("No changes added to the commit.");
-            System.exit(0);
-        }
         Commit newCommit = new Commit(message);
         newCommit.saveCommit();
         Commit.cleanAddFile();
@@ -145,6 +153,7 @@ public class Repository {
     }
 
     public static void makeRemove(String path) {
+
         Blob newBlob = new Blob(path);
         Remove newRemove = new Remove(newBlob);
         newRemove.saveRemove();
@@ -152,6 +161,7 @@ public class Repository {
 
     //print the single log message of current commit.
     public static void printLog(Commit currentCommit) {
+        checkGitletRepository();
         System.out.println("===");
         System.out.println("commit " + currentCommit.getCommitID());
         System.out.println("Date: " + currentCommit.getCommitDate());
@@ -161,6 +171,7 @@ public class Repository {
 
     //print all log message by sequence of all commits.
     public static void printAllLog() {
+        checkGitletRepository();
         Commit masterCommit = getMasterCommit();
         printLog(masterCommit);
         Commit currentCommit;
@@ -170,19 +181,26 @@ public class Repository {
         }
     }
 
-    public static void find(String message) {
-        Commit masterCommit = getMasterCommit();
-        Commit currentCommit;
-        boolean flag = false;
-        if (masterCommit.getCommitMessage().equals(message)) {
-            System.out.printf(masterCommit.getCommitID() + "\n");
-            flag = true;
+    public static void printGlobalLog() {
+        checkGitletRepository();
+        Collection c = Utils.plainFilenamesIn(Commit.commits);
+        Iterator commitID = c.iterator();
+        while (commitID.hasNext()) {
+            Commit newCommit = getCommitFromCommitID((String) commitID.next());
+            printLog(newCommit);
         }
-        for(String currentCommitID : masterCommit.getParent()) {
-            currentCommit = getCommitFromCommitID(currentCommitID);
-            if (currentCommit.getCommitMessage().equals(message)) {
-                System.out.printf(currentCommit.getCommitID() + "\n");
+    }
+
+    public static void find(String message) {
+        checkGitletRepository();
+        boolean flag = false;
+        Collection c = Utils.plainFilenamesIn(Commit.commits);
+        Iterator commitID = c.iterator();
+        while (commitID.hasNext()) {
+            Commit newCommit = getCommitFromCommitID((String) commitID.next());
+            if (newCommit.getCommitMessage().equals(message)) {
                 flag = true;
+                System.out.printf(newCommit.getCommitID() + "\n");
             }
         }
         if (!flag) {
@@ -193,6 +211,7 @@ public class Repository {
 
     //finished the front 3 items, hasn't finished the last two sections.
     public static void status() {
+        checkGitletRepository();
         //problems here, Head.setMaster() neeed to finish.
         System.out.println("=== Branches ===");
         String[] dir = Head.masterFile.list();
@@ -230,6 +249,7 @@ public class Repository {
     }
 
     public static void createBranch(String brancheName) {
+        checkGitletRepository();
         if (Utils.join(Head.headsFile, brancheName).exists() || Utils.join(Head.masterFile, brancheName).exists()) {
             System.out.println("A branch with that name already exists.");
             System.exit(0);
@@ -240,6 +260,7 @@ public class Repository {
     }
 
     public static void removeBranch(String branchName) {
+        checkGitletRepository();
         if (getMaster().getBranchName().equals(branchName)) {
             System.out.println("Cannot remove the current branch.");
             System.exit(0);
@@ -263,6 +284,7 @@ public class Repository {
     //if the file isn't in the commit tree, error,
     //otherwise, get the blobID and find out the blob, write the content into the original file path.
     public static void checkoutFile(String fileName) {
+        checkGitletRepository();
         Commit masterCommit = getMasterCommit();
         TreeMap masterCommitTree = masterCommit.getTreeMap();
         if (!masterCommitTree.containsKey(fileName)) {
@@ -275,6 +297,7 @@ public class Repository {
     }
 
     public static void checkoutFileWithCommitID(String targetCommitID, String fileName) {
+        checkGitletRepository();
         File targetCommitFile = Utils.join(Commit.commits, targetCommitID);
         if (!targetCommitFile.exists()) {
             System.out.println("No commit with that id exists.");
@@ -291,37 +314,286 @@ public class Repository {
         Utils.writeContents(Utils.join(fileName), fileBlob.getContentAsByte());
     }
 
-    public static void checkoutBranch(String branchName) {
-        if (getMaster().getBranchName().equals(branchName)) {
-            System.out.println("No need to checkout the current branch.");
-            System.exit(0);
-        }
-        if (!Utils.join(Head.headsFile, branchName).exists()) {
-            System.out.println("No such branch exists.");
-            System.exit(0);
-        }
-        if (!getAddTree().isEmpty() || CWD.length() > 1) {
-            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
-            System.exit(0);
-        }
-        //delete add, then write new.(might be wrong idea?)
+    //check whether files in CWD are all tracked.
+    public static void checkCWDFileTracked() {
+        checkGitletRepository();
+        Commit currentCommit = getMasterCommit();
+        TreeMap currentCommitTree = currentCommit.getTreeMap();
+
         Collection c = Utils.plainFilenamesIn(CWD);
         Iterator CWDIter = c.iterator();
         while (CWDIter.hasNext()) {
-            Utils.join((String) CWDIter.next()).delete();
+            if (!currentCommitTree.containsKey(CWDIter.next())) {
+                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            }
         }
+    }
+
+    //go through CWD, check the path
+    //go through commitTree, check the path.
+    public static void changeCWDFile(String branchName) {
+        checkGitletRepository();
         Head newHead = getBranch(branchName);
         newHead.setMaster();
-        Commit newCommit = getCommitFromCommitID(newHead.getCommitID());
+        Commit newCommit = getMasterCommit();
         TreeMap newCommitTree = newCommit.getTreeMap();
-        Collection newBlobIDs = newCommitTree.values();
-        Iterator newBlobID = newBlobIDs.iterator();
-        while (newBlobID.hasNext()) {
-            Blob newBlob = getBlobFromBlobID((String) newBlobID.next());
-            Utils.writeContents(Utils.join(CWD, newBlob.getPath()), newBlob.getContentAsByte());
+        Collection ca = Utils.plainFilenamesIn(CWD);
+        Iterator agCWDIter = ca.iterator();
+        while (agCWDIter.hasNext()) {
+            String newPath = (String) agCWDIter.next();
+            if (!newCommitTree.containsKey(newPath)) {
+                Utils.join(newPath).delete();
+            } else {
+                //no matter whether the file is the same or not, just overwrite it.
+                String newID = (String) newCommitTree.get(newPath);
+                Blob newBlob = getBlobFromBlobID(newID);
+                Utils.writeContents(Utils.join(newPath), newBlob.getContentAsByte());
+            }
         }
+
+        Collection ct = newCommitTree.keySet();
+        Iterator treeIter = ct.iterator();
+        while (treeIter.hasNext()) {
+            String commitPath = (String) treeIter.next();
+            if (!Utils.join(commitPath).exists()) {
+                String newID2 = (String) newCommitTree.get(commitPath);
+                Blob newBlob2 = getBlobFromBlobID(newID2);
+                Utils.writeContents(Utils.join(commitPath), newBlob2.getContentAsByte());
+            }
+        }
+    }
+
+    public static void checkoutBranch(String branchName) {
+        checkGitletRepository();
+
+        //check whether files in CWD are all tracked.
+        checkCWDFileTracked();
+
+        //go through CWD, check the path
+        //go through commitTree, check the path.
+        changeCWDFile(branchName);
+
         Commit.cleanAddFile();
         Commit.cleanRemoveFile();
     }
 
+    public static void reset(String commitID) {
+        checkGitletRepository();
+        Commit targetCommit = getCommitFromCommitID(commitID);
+        if (targetCommit == null) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
+        //check whether files in CWD are all tracked.
+        checkCWDFileTracked();
+
+        Head master = getMaster();
+        String masterName = master.getBranchName();
+        Head newMaster = new Head(masterName, targetCommit);
+        newMaster.saveInMaster();
+        //go through CWD, check the path
+        //go through commitTree, check the path.
+        changeCWDFile(masterName);
+
+        Commit.cleanAddFile();
+        Commit.cleanRemoveFile();
+
+    }
+
+    public static String getSplitPointID(String branchName) {
+        Commit masterCommit = getMasterCommit();
+        String masterCommitPointID = masterCommit.getCommitID();
+        Head branchHead = getBranch(branchName);
+        String branchCommitID = branchHead.getCommitID();
+        Commit branchCommit = getCommitFromCommitID(branchCommitID);
+        String branchCommitPointID = branchCommit.getCommitID();
+
+        HashMap masterCommitTrack = new HashMap<>();
+        masterCommitTrack.put(masterCommitPointID, 1);
+        Collection m = masterCommit.getParent();
+        Iterator masterIter = m.iterator();
+        while (masterIter.hasNext()) {
+            masterCommitTrack.put(masterIter.next(), 1);
+        }
+
+        if (masterCommitTrack.containsKey(branchCommitPointID)) {
+            return branchCommitPointID;
+        }
+
+        Collection b = branchCommit.getParent();
+        Iterator branchIter = b.iterator();
+
+        while (branchIter.hasNext()) {
+            branchCommitPointID = (String) branchIter.next();
+            if (masterCommitTrack.containsKey(branchCommitPointID)) {
+                return branchCommitPointID;
+            }
+        }
+        return null;
+
+
+    }
+
+    public static void getMerge(String branchName) {
+        checkCWDFileTracked();
+        if (!getAddTree().isEmpty() || !getRemoveTree().isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+            return;
+        }
+
+        Commit masterCommit = getMasterCommit();
+        String masterCommitPointID = masterCommit.getCommitID();
+
+        //System.out.println(masterCommitPointID);
+
+        Head branchHead = getBranch(branchName);
+        if (branchHead == null) {
+            System.out.println("A branch with that name does not exist.");
+            return;
+        }
+        String branchCommitID = branchHead.getCommitID();
+
+
+        //System.out.println(branchCommitID);
+
+        Commit branchCommit = getCommitFromCommitID(branchCommitID);
+        String branchCommitPointID = branchCommit.getCommitID();
+        String spiltPointID = getSplitPointID(branchName);
+
+        //System.out.println(spiltPointID);
+
+        Commit spiltPoint = getCommitFromCommitID(spiltPointID);
+
+        if (masterCommitPointID.equals(spiltPointID)) {
+            System.out.println("Cannot merge a branch with itself.");
+            return;
+        }
+
+        if (branchCommitPointID.equals(spiltPointID)) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+            return;
+        }
+
+        if (masterCommitPointID.equals(spiltPointID)) {
+            checkoutBranch(branchName);
+            System.out.println("Current branch fast-forwarded.");
+            return;
+        }
+
+        //create three trees, masterTree, branchTree, spiltTree, the key is ID, and the value is path.
+        TreeMap masterTree = masterCommit.getTreeMap();
+        Collection masterC = masterTree.keySet();
+        Iterator masterIter = masterC.iterator();
+        TreeMap masterMap = new TreeMap<>();
+        while (masterIter.hasNext()) {
+            String newPath = (String) masterIter.next();
+            masterMap.put(masterTree.get(newPath), newPath);
+        }
+
+        TreeMap branchTree = branchCommit.getTreeMap();
+        Collection branchC = branchTree.keySet();
+        Iterator branchIter = branchC.iterator();
+        TreeMap branchMap = new TreeMap<>();
+        while (branchIter.hasNext()) {
+            String newPath = (String) branchIter.next();
+            branchMap.put(branchTree.get(newPath), newPath);
+        }
+
+        TreeMap spiltTree = spiltPoint.getTreeMap();
+        Collection spiltC = spiltTree.keySet();
+        Iterator spiltIter = spiltC.iterator();
+        TreeMap spiltMap = new TreeMap<>();
+        while (spiltIter.hasNext()) {
+            String newPath = (String) spiltIter.next();
+            spiltMap.put(spiltTree.get(newPath), newPath);
+        }
+        //combine all IDToPath in the allMap
+        TreeMap allMap = new TreeMap<>();
+        Collection c1 = masterMap.keySet();
+        Iterator iter1 = c1.iterator();
+        while (iter1.hasNext()) {
+            String newID = (String) iter1.next();
+            allMap.put(newID, masterMap.get(newID));
+        }
+        Collection c2 = branchMap.keySet();
+        Iterator iter2 = c2.iterator();
+        while (iter2.hasNext()) {
+            String newID = (String) iter2.next();
+            if (!allMap.containsKey(newID)) {
+                allMap.put(newID, branchMap.get(newID));
+            }
+        }
+        Collection c3 = spiltMap.keySet();
+        Iterator iter3 = c3.iterator();
+        while (iter3.hasNext()) {
+            String newID = (String) iter3.next();
+            if (!allMap.containsKey(newID)) {
+                allMap.put(newID, spiltMap.get(newID));
+            }
+        }
+
+        boolean conflict = false;
+
+        //compare allMap to the three trees, judge the seven situations.
+        Collection allC = allMap.keySet();
+        Iterator allIter = allC.iterator();
+        while (allIter.hasNext()) {
+            String allID = (String) allIter.next();
+            //correspond to situation 1/5/8, need further judge.
+            if (!masterMap.containsKey(allID) && branchMap.containsKey(allID) && !spiltMap.containsKey(allID)) {
+                String filePath = (String) branchMap.get(allID);
+                String masterID = (String) masterTree.get(filePath);
+                String spiltID = (String) spiltTree.get(filePath);
+                //correspond to situation 5, checkout the file and adds it.
+                if (masterID == null && branchTree.get(filePath) != null && spiltID == null) {
+                    //checkoutFileWithCommitID(branchCommitID, (String) branchMap.get(allID));
+                    System.out.println(filePath);
+                    makeAdd(filePath);
+                } else if (masterID != null && spiltID != null && masterID.equals(spiltID)) {
+                    //correspond to situation 1, add the file.
+                    makeAdd((String) branchMap.get(allID));
+                } else {
+                    //correspond to situation 8, conflict.
+
+                    conflict = true;
+
+                }
+            }
+
+            //correspond to situation 8, conflict.
+            if (masterMap.containsKey(allID) && !branchMap.containsKey(allID) && !spiltMap.containsKey(allID)) {
+                String filePath = (String) masterMap.get(allID);
+                String branchID = (String) branchTree.get(filePath);
+                String spiltID = (String) spiltTree.get(filePath);
+                if (masterTree.get(filePath) != null && branchID == null && spiltID == null) {
+
+                } else {
+                    //correspond to situation 8, conflict.
+                    conflict = true;
+                }
+            }
+
+            //correspond to situation 6, remove the file.
+            if (masterMap.containsKey(allID) && !branchMap.containsKey(allID) && spiltMap.containsKey(allID)) {
+                String filePath = (String) masterMap.get(allID);
+                if (masterTree.get(filePath) != null && branchTree.get(filePath) == null && spiltTree.get(filePath) != null) {
+                    makeRemove((String) masterMap.get(allID));
+                }
+            }
+
+            String commitMessage = "Merged" + branchName + "into" + getMaster().getMasterName() + ".";
+            if (conflict) {
+                System.out.println("Encountered a merge conflict.");
+                Commit mergeCommit = new Commit(commitMessage);
+            }
+
+            Commit mergeCommit = new Commit(commitMessage);
+            mergeCommit.saveCommit();
+            Commit.cleanAddFile();
+            Commit.cleanRemoveFile();
+            Head newHead = new Head(getMaster().getBranchName(), mergeCommit);
+            newHead.saveInMaster();
+        }
+    }
 }

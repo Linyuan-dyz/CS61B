@@ -92,7 +92,17 @@ public class Commit implements Serializable {
         this.date = new Date();
         this.standerTime = dateToTimeStamp(date);
         this.parent = getMasterCommitParent();
-        this.pathToBlobID = combineAddAndRemove();
+        this.pathToBlobID = combineAddAndRemoveAndParent();
+        this.commitID = Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
+        this.commitName = new File(commits, commitID);
+    }
+
+    public Commit (String message, TreeMap map) {
+        this.message = message;
+        this.date = new Date();
+        this.standerTime = dateToTimeStamp(date);
+        this.parent = getMasterCommitParent();
+        this.pathToBlobID = map;
         this.commitID = Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
         this.commitName = new File(commits, commitID);
     }
@@ -124,16 +134,31 @@ public class Commit implements Serializable {
         return newParent;
     }
 
-    private TreeMap combineAddAndRemove() {
+    private TreeMap combineAddAndRemoveAndParent() {
+        Commit masterCommit = Repository.getMasterCommit();
+        TreeMap masterCommitTree = masterCommit.getTreeMap();
         TreeMap addTree =  Repository.getAddTree();
         TreeMap removeTree = Repository.getRemoveTree();
 
+        //combine addTree and previous commitTree.
+        Collection cc = addTree.keySet();
+        Iterator addTreeKey = cc.iterator();
+        while (addTreeKey.hasNext()) {
+            String newPath = (String) addTreeKey.next();
+            if (!masterCommitTree.containsKey(newPath)) {
+                masterCommitTree.put(newPath, addTree.get(newPath));
+            } else {
+                masterCommitTree.replace(newPath, addTree.get(newPath));
+            }
+        }
+        //combine newCommitTree and removeTree.
         Collection c = removeTree.keySet();
         Iterator iter = c.iterator();
         while (iter.hasNext()) {
-            addTree.remove(iter.next());
+            masterCommitTree.remove(iter.next());
         }
-        return addTree;
+
+        return masterCommitTree;
     }
 
 }
