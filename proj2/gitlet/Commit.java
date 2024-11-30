@@ -7,6 +7,8 @@ import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 import static gitlet.Utils.join;
 
@@ -40,7 +42,7 @@ public class Commit implements Serializable {
     //standerTime for sha1 to calculate
     private String standerTime;
     //reference to parent commit
-    private List<String> parent = new LinkedList<>();
+    private LinkedList<String> parent = new LinkedList<>();
     //use a TreeMap to cast the path to the file's blobID.
     private TreeMap<String, String> pathToBlobID;
     //commitID
@@ -61,7 +63,7 @@ public class Commit implements Serializable {
         return standerTime;
     }
     //return the parent of a commit.
-    public List<String> getParent() {
+    public LinkedList<String> getParent() {
         return parent;
     }
     //return the TreeMap in Commit.
@@ -127,9 +129,9 @@ public class Commit implements Serializable {
         return dateFormat.format(date);
     }
 
-    private List<String> getMasterCommitParent() {
+    private LinkedList<String> getMasterCommitParent() {
         Commit MasterCommit = Repository.getMasterCommit();
-        List<String> newParent = MasterCommit.getParent();
+        LinkedList<String> newParent = MasterCommit.getParent();
         newParent.addFirst(MasterCommit.getCommitID());
         return newParent;
     }

@@ -142,6 +142,12 @@ public class Repository {
         newAdd.saveAdd();
     }
 
+    public static void makeAddWithBlob(Blob newBlob) {
+        newBlob.saveBlob();
+        Add newAdd = new Add(newBlob);
+        newAdd.saveAdd();
+    }
+
     public static void makeCommit(String message) {
         Commit newCommit = new Commit(message);
         newCommit.saveCommit();
@@ -548,8 +554,8 @@ public class Repository {
                 //correspond to situation 5, checkout the file and adds it.
                 if (masterID == null && branchTree.get(filePath) != null && spiltID == null) {
                     //checkoutFileWithCommitID(branchCommitID, (String) branchMap.get(allID));
-                    System.out.println(filePath);
-                    makeAdd(filePath);
+                    Blob newBlob = getBlobFromBlobID(allID);
+                    makeAddWithBlob(newBlob);
                 } else if (masterID != null && spiltID != null && masterID.equals(spiltID)) {
                     //correspond to situation 1, add the file.
                     makeAdd((String) branchMap.get(allID));
@@ -588,12 +594,7 @@ public class Repository {
                 Commit mergeCommit = new Commit(commitMessage);
             }
 
-            Commit mergeCommit = new Commit(commitMessage);
-            mergeCommit.saveCommit();
-            Commit.cleanAddFile();
-            Commit.cleanRemoveFile();
-            Head newHead = new Head(getMaster().getBranchName(), mergeCommit);
-            newHead.saveInMaster();
+            makeCommit(commitMessage);
         }
     }
 }
