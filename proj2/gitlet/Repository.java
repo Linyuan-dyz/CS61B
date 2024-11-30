@@ -415,7 +415,7 @@ public class Repository {
         Commit branchCommit = getCommitFromCommitID(branchCommitID);
         String branchCommitPointID = branchCommit.getCommitID();
 
-        HashMap masterCommitTrack = new HashMap<>();
+        TreeMap masterCommitTrack = new TreeMap<>();
         masterCommitTrack.put(masterCommitPointID, 1);
         Collection m = masterCommit.getParent();
         Iterator masterIter = m.iterator();
@@ -553,7 +553,7 @@ public class Repository {
                 String spiltID = (String) spiltTree.get(filePath);
                 //correspond to situation 5, checkout the file and adds it.
                 if (masterID == null && branchTree.get(filePath) != null && spiltID == null) {
-                    //checkoutFileWithCommitID(branchCommitID, (String) branchMap.get(allID));
+                    checkoutFileWithCommitID(branchCommitID, filePath);
                     Blob newBlob = getBlobFromBlobID(allID);
                     makeAddWithBlob(newBlob);
                 } else if (masterID != null && spiltID != null && masterID.equals(spiltID)) {
@@ -588,13 +588,13 @@ public class Repository {
                 }
             }
 
-            String commitMessage = "Merged" + branchName + "into" + getMaster().getMasterName() + ".";
-            if (conflict) {
-                System.out.println("Encountered a merge conflict.");
-                Commit mergeCommit = new Commit(commitMessage);
-            }
-
-            makeCommit(commitMessage);
         }
+        String commitMessage = "Merged " + branchName + " into " + getMaster().getBranchName() + ".";
+        if (conflict) {
+            System.out.println("Encountered a merge conflict.");
+            Commit mergeCommit = new Commit(commitMessage);
+        }
+
+        makeCommit(commitMessage);
     }
 }
