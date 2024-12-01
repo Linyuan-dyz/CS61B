@@ -129,6 +129,7 @@ public class Repository {
         setUpPresistance();
         Commit init = new Commit();
         init.saveCommit();
+        init.saveShortCommit();;
         Head master = new Head(init);
         master.saveInMaster();
     }
@@ -149,6 +150,7 @@ public class Repository {
     public static void makeCommit(String message) {
         Commit newCommit = new Commit(message);
         newCommit.saveCommit();
+        newCommit.saveShortCommit();;
         Commit.cleanAddFile();
         Commit.cleanRemoveFile();
         Head originalMaster = getMaster();
@@ -159,6 +161,7 @@ public class Repository {
     public static void makeCommitWithParent(String message, LinkedList<String> newParent) {
         Commit newCommit = new Commit(message, newParent);
         newCommit.saveCommit();
+        newCommit.saveShortCommit();
         Commit.cleanAddFile();
         Commit.cleanRemoveFile();
         Head originalMaster = getMaster();
@@ -213,7 +216,11 @@ public class Repository {
         Collection c = Utils.plainFilenamesIn(Commit.commits);
         Iterator commitID = c.iterator();
         while (commitID.hasNext()) {
-            Commit newCommit = getCommitFromCommitID((String) commitID.next());
+            String newID = (String) commitID.next();
+            Commit newCommit = getCommitFromCommitID(newID);
+            if (newID.length() != 40) {
+                continue;
+            }
             if (newCommit.getCommitMessage().equals(message)) {
                 flag = true;
                 System.out.printf(newCommit.getCommitID() + "\n");

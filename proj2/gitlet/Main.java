@@ -74,7 +74,7 @@ public class Main {
             case "checkout":
                 if (args[1].equals("--")) {
                     Repository.checkoutFile(args[2]);
-                } else if (args[1].length() == 40) {
+                } else if (args[1].length() == 40 || args[1].length() == 8) {
                     if (args[2].equals("--")) {
                         Repository.checkoutFileWithCommitID(args[1], args[3]);
                     } else {

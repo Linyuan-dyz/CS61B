@@ -49,6 +49,10 @@ public class Commit implements Serializable {
     private String commitID;
     //use commitFileName to indicate which file to point, in order to find the specific file.
     private File commitName;
+    //the front 8 bits of commitID.
+    private String commitID8;
+    //the short version of commitName.
+    private File shortCommitName;
 
     //return the commit message.
     public String getCommitMessage() {
@@ -78,6 +82,14 @@ public class Commit implements Serializable {
     public String getCommitID() {
         return commitID;
     }
+    //return the front 8 commitID.
+    public String getCommitID8() {
+        return commitID8;
+    }
+    //return the short version of commitName.
+    public File getShortCommitName() {
+        return shortCommitName;
+    }
 
     public Commit() {
         this.message = "initial commit";
@@ -87,6 +99,8 @@ public class Commit implements Serializable {
         this.pathToBlobID = new TreeMap<>();
         this.commitID = Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
         this.commitName = new File(commits, commitID);
+        this.commitID8 = this.commitID.substring(0, 8);
+        this.shortCommitName = new File(commits, commitID8);
     }
 
     public Commit(String message) {
@@ -97,6 +111,8 @@ public class Commit implements Serializable {
         this.pathToBlobID = combineAddAndRemoveAndParent();
         this.commitID = Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
         this.commitName = new File(commits, commitID);
+        this.commitID8 = this.commitID.substring(0, 8);
+        this.shortCommitName = new File(commits, commitID8);
     }
 
     public Commit (String message, LinkedList newParent) {
@@ -107,10 +123,16 @@ public class Commit implements Serializable {
         this.pathToBlobID = combineAddAndRemoveAndParent();
         this.commitID = Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
         this.commitName = new File(commits, commitID);
+        this.commitID8 = this.commitID.substring(0, 8);
+        this.shortCommitName = new File(commits, commitID8);
     }
 
     public void saveCommit() {
         Utils.writeObject(commitName, this);
+    }
+
+    public void saveShortCommit() {
+        Utils.writeObject(shortCommitName, this);
     }
 
     public static void cleanAddFile() {
