@@ -7,9 +7,9 @@ import static gitlet.Utils.join;
 
 public class Head implements Serializable {
     /** The headsFile directory. */
-    public static final File HEADSFILE = join(Repository.REFS_DIR, "headsFile");
+    public static final File headsFile = join(Repository.REFS_DIR, "headsFile");
     /** The masterFile directory. */
-    public static final File MASTERFILE = join(HEADSFILE, "masterFile");
+    public static final File masterFile = join(headsFile, "masterFile");
 
     private String commitID;
     private String branchName;
@@ -32,15 +32,15 @@ public class Head implements Serializable {
     public Head(Commit commit) {
         this.commitID = commit.getCommitID();
         this.branchName = "master";
-        this.headName = new File(HEADSFILE, branchName);
-        this.masterName = new File(MASTERFILE, branchName);
+        this.headName = new File(headsFile, branchName);
+        this.masterName = new File(masterFile, branchName);
     }
 
     public Head(String branchName, Commit commit) {
         this.commitID = commit.getCommitID();
         this.branchName = branchName;
-        this.headName = new File(HEADSFILE, branchName);
-        this.masterName = new File(MASTERFILE, branchName);
+        this.headName = new File(headsFile, branchName);
+        this.masterName = new File(masterFile, branchName);
     }
 
     //save the head in headsFile, if it doesn't exist, create it.
@@ -60,10 +60,10 @@ public class Head implements Serializable {
     public void setMaster() {
 
         Head master = Repository.getMaster();
-        Utils.join(MASTERFILE, master.getBranchName()).delete();
+        Utils.join(masterFile, master.getBranchName()).delete();
         master.saveInHeads();
 
-        Utils.join(HEADSFILE, this.getBranchName()).delete();
+        Utils.join(headsFile, this.getBranchName()).delete();
         this.saveInMaster();
     }
 

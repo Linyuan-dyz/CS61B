@@ -8,8 +8,8 @@ import static gitlet.Utils.join;
 
 public class Add implements Serializable {
     /** The addStage directory. */
-    public static final File ADDSTAGE = join(Repository.STAGES_DIR, "addStage");
-    public static final File ADDFILE = new File(ADDSTAGE, "addFile");
+    public static final File addStage = join(Repository.STAGES_DIR, "addStage");
+    public static final File addFile = new File(addStage, "addFile");
 
     private TreeMap<String, String> pathToID = new TreeMap<>();
 
@@ -37,15 +37,13 @@ public class Add implements Serializable {
 
         //get the masterCommit tree, and judge whether it contains newPath and newBlobID.
         TreeMap commitTree = Repository.getMasterCommit().getTreeMap();
-        if (!commitTree.isEmpty()
-                && commitTree.get(newPath) != null
-                && commitTree.get(newPath).equals(newID)) {
+        if (!commitTree.isEmpty() && commitTree.get(newPath) != null && commitTree.get(newPath).equals(newID)) {
             return;
         }
         //continue from here.
         TreeMap<String, String> originalTreeMap = new TreeMap<>();
-        if (ADDFILE.exists()) {
-            originalTreeMap = Utils.readObject(ADDFILE, TreeMap.class);
+        if (addFile.exists()) {
+            originalTreeMap = Utils.readObject(addFile, TreeMap.class);
         }
 
         if (originalTreeMap.get(newPath) == null) {
@@ -62,6 +60,6 @@ public class Add implements Serializable {
     }
 
     public void saveAdd() {
-        Utils.writeObject(ADDFILE, this.pathToID);
+        Utils.writeObject(addFile, this.pathToID);
     }
 }

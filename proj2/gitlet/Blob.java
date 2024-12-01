@@ -7,7 +7,7 @@ import static gitlet.Utils.join;
 
 public class Blob implements Serializable {
     /** The blobs directory. */
-    public static final File BLOBS = join(Repository.OBJECTS_DIR, "blobs");
+    public static final File blobs = join(Repository.OBJECTS_DIR, "blobs");
 
     //originalFile refers to the file to be stored.
     private File originalFile;
@@ -61,7 +61,7 @@ public class Blob implements Serializable {
             this.contentAsByte = null;
             this.blobID = "";
         }
-        this.blobName = new File(BLOBS, blobID);
+        this.blobName = new File(blobs, blobID);
     }
 
     /*save the correspone blob file in the blobs*/

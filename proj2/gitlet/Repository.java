@@ -50,31 +50,31 @@ public class Repository {
         CWD.mkdir();
         GITLET_DIR.mkdir();
         OBJECTS_DIR.mkdir();
-        Commit.COMMITS.mkdir();
-        Blob.BLOBS.mkdir();
+        Commit.commits.mkdir();
+        Blob.blobs.mkdir();
         REFS_DIR.mkdir();
-        Head.HEADSFILE.mkdir();
-        Head.MASTERFILE.mkdir();
+        Head.headsFile.mkdir();
+        Head.masterFile.mkdir();
         STAGES_DIR.mkdir();
-        Add.ADDFILE.mkdir();
-        Remove.REMOVESTAGE.mkdir();
+        Add.addStage.mkdir();
+        Remove.removeStage.mkdir();
     }
 
     public static Head getMaster() {
-        String[] masterContent = Head.MASTERFILE.list();
+        String[] masterContent = Head.masterFile.list();
         String masterName = masterContent[0];
-        return Utils.readObject(Utils.join(Head.MASTERFILE, masterName), Head.class);
+        return Utils.readObject(Utils.join(Head.masterFile, masterName), Head.class);
     }
 
     public static Commit getMasterCommit() {
         Head master = getMaster();
-        return Utils.readObject(Utils.join(Commit.COMMITS, master.getCommitID()), Commit.class);
+        return Utils.readObject(Utils.join(Commit.commits, master.getCommitID()), Commit.class);
     }
     public static Head getBranch(String branchName) {
-        if (Utils.join(Head.MASTERFILE, branchName).exists()) {
-            return Utils.readObject(Utils.join(Head.MASTERFILE, branchName), Head.class);
-        } else if (Utils.join(Head.HEADSFILE, branchName).exists()) {
-            return Utils.readObject(Utils.join(Head.HEADSFILE, branchName), Head.class);
+        if (Utils.join(Head.masterFile, branchName).exists()) {
+            return Utils.readObject(Utils.join(Head.masterFile, branchName), Head.class);
+        } else if (Utils.join(Head.headsFile, branchName).exists()){
+            return Utils.readObject(Utils.join(Head.headsFile, branchName), Head.class);
         } else {
             return null;
         }
@@ -82,7 +82,7 @@ public class Repository {
 
     //return commit by commitID, if there is no commit correspond ID, return null.
     public static Commit getCommitFromCommitID(String commitID) {
-        File cf = Utils.join(Commit.COMMITS, commitID);
+        File cf = Utils.join(Commit.commits, commitID);
         if (!cf.exists()) {
             return null;
         }
@@ -91,24 +91,24 @@ public class Repository {
 
     public static TreeMap<String, String> getAddTree() {
         TreeMap<String, String> emptyMap = new TreeMap<>();
-        if (!Add.ADDFILE.exists()) {
+        if (!Add.addFile.exists()) {
             return emptyMap;
         }
-        TreeMap<String, String> newTreeMap = Utils.readObject(Add.ADDFILE, TreeMap.class);
+        TreeMap<String, String> newTreeMap = Utils.readObject(Add.addFile, TreeMap.class);
         return newTreeMap;
     }
 
     public static TreeMap<String, String> getRemoveTree() {
         TreeMap<String, String> emptyMap = new TreeMap<>();
-        if (!Remove.REMOVEFILE.exists()) {
+        if (!Remove.removeFile.exists()) {
             return emptyMap;
         }
-        TreeMap<String, String> newTreeMap = Utils.readObject(Remove.REMOVEFILE, TreeMap.class);
+        TreeMap<String, String> newTreeMap = Utils.readObject(Remove.removeFile, TreeMap.class);
         return newTreeMap;
     }
 
     public static Blob getBlobFromBlobID(String blobID) {
-        File blobFileName = Utils.join(Blob.BLOBS, blobID);
+        File blobFileName = Utils.join(Blob.blobs, blobID);
         return Utils.readObject(blobFileName, Blob.class);
     }
 
@@ -129,7 +129,7 @@ public class Repository {
         setUpPresistance();
         Commit init = new Commit();
         init.saveCommit();
-        init.saveShortCommit();
+        init.saveShortCommit();;
         Head master = new Head(init);
         master.saveInMaster();
     }
@@ -150,7 +150,7 @@ public class Repository {
     public static void makeCommit(String message) {
         Commit newCommit = new Commit(message);
         newCommit.saveCommit();
-        newCommit.saveShortCommit();
+        newCommit.saveShortCommit();;
         Commit.cleanAddFile();
         Commit.cleanRemoveFile();
         Head originalMaster = getMaster();
@@ -193,7 +193,7 @@ public class Repository {
         printLog(masterCommit);
         Commit currentCommit = masterCommit;
         while (!currentCommit.getParent().isEmpty()) {
-            for (String currentCommitID: currentCommit.getParent()) {
+            for(String currentCommitID: currentCommit.getParent()) {
                 currentCommit = getCommitFromCommitID(currentCommitID);
                 printLog(currentCommit);
             }
@@ -202,7 +202,7 @@ public class Repository {
 
     public static void printGlobalLog() {
         checkGitletRepository();
-        Collection c = Utils.plainFilenamesIn(Commit.COMMITS);
+        Collection c = Utils.plainFilenamesIn(Commit.commits);
         Iterator commitID = c.iterator();
         while (commitID.hasNext()) {
             Commit newCommit = getCommitFromCommitID((String) commitID.next());
@@ -213,7 +213,7 @@ public class Repository {
     public static void find(String message) {
         checkGitletRepository();
         boolean flag = false;
-        Collection c = Utils.plainFilenamesIn(Commit.COMMITS);
+        Collection c = Utils.plainFilenamesIn(Commit.commits);
         Iterator commitID = c.iterator();
         while (commitID.hasNext()) {
             String newID = (String) commitID.next();
@@ -237,17 +237,17 @@ public class Repository {
         checkGitletRepository();
         //problems here, Head.setMaster() neeed to finish.
         System.out.println("=== Branches ===");
-        String[] dir = Head.MASTERFILE.list();
+        String[] dir = Head.masterFile.list();
         System.out.println("*" + dir[0]);
-        for (String headName : Utils.plainFilenamesIn(Head.HEADSFILE)) {
+        for(String headName : Utils.plainFilenamesIn(Head.headsFile)) {
             System.out.println(headName);
         }
         System.out.printf("\n");
         System.out.println("=== Staged Files ===");
-        File addFile = Utils.join(Add.ADDFILE);
-        File removeFile = Utils.join(Remove.REMOVEFILE);
+        File addFile = Utils.join(Add.addFile);
+        File removeFile = Utils.join(Remove.removeFile);
         if (addFile.exists()) {
-            TreeMap<String, String> addTreeMap = Utils.readObject(Add.ADDFILE, TreeMap.class);
+            TreeMap<String, String> addTreeMap = Utils.readObject(Add.addFile, TreeMap.class);
             Collection addCollection = addTreeMap.keySet();
             Iterator addIter = addCollection.iterator();
             while (addIter.hasNext()) {
@@ -257,7 +257,7 @@ public class Repository {
         System.out.printf("\n");
         System.out.println("=== Removed Files ===");
         if (removeFile.exists()) {
-            TreeMap<String, String> removeTreeMap = Utils.readObject(Remove.REMOVEFILE, TreeMap.class);
+            TreeMap<String, String> removeTreeMap = Utils.readObject(Remove.removeFile, TreeMap.class);
             Collection removeCollection = removeTreeMap.keySet();
             Iterator removeIter = removeCollection.iterator();
             while (removeIter.hasNext()) {
@@ -273,7 +273,7 @@ public class Repository {
 
     public static void createBranch(String brancheName) {
         checkGitletRepository();
-        if (Utils.join(Head.HEADSFILE, brancheName).exists() || Utils.join(Head.MASTERFILE, brancheName).exists()) {
+        if (Utils.join(Head.headsFile, brancheName).exists() || Utils.join(Head.masterFile, brancheName).exists()) {
             System.out.println("A branch with that name already exists.");
             System.exit(0);
         }
@@ -289,11 +289,11 @@ public class Repository {
             System.exit(0);
         }
         boolean flag = false;
-        Collection c = Utils.plainFilenamesIn(Head.HEADSFILE);
+        Collection c = Utils.plainFilenamesIn(Head.headsFile);
         Iterator headIter = c.iterator();
         while (headIter.hasNext()) {
             if (headIter.next().equals(branchName)) {
-                Utils.join(Head.HEADSFILE, branchName).delete();
+                Utils.join(Head.headsFile, branchName).delete();
                 flag = true;
             }
         }
@@ -321,7 +321,7 @@ public class Repository {
 
     public static void checkoutFileWithCommitID(String targetCommitID, String fileName) {
         checkGitletRepository();
-        File targetCommitFile = Utils.join(Commit.COMMITS, targetCommitID);
+        File targetCommitFile = Utils.join(Commit.commits, targetCommitID);
         if (!targetCommitFile.exists()) {
             System.out.println("No commit with that id exists.");
             System.exit(0);
@@ -349,9 +349,9 @@ public class Repository {
         TreeMap branchCommitTree = branchCommit.getTreeMap();
 
         Collection c = Utils.plainFilenamesIn(CWD);
-        Iterator cwdIter = c.iterator();
-        while (cwdIter.hasNext()) {
-            String fileName = (String) cwdIter.next();
+        Iterator CWDIter = c.iterator();
+        while (CWDIter.hasNext()) {
+            String fileName = (String) CWDIter.next();
             if (!currentCommitTree.containsKey(fileName) && branchCommitTree.containsKey(fileName)) {
                 System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
@@ -423,7 +423,7 @@ public class Repository {
         tempMaster.saveInHeads();
         //check whether files in CWD are all tracked.
         checkCWDFileTracked("tempMaster");
-        Utils.join(Head.HEADSFILE, "tempMaster").delete();
+        Utils.join(Head.headsFile, "tempMaster").delete();
         newMaster.saveInMaster();
         //go through CWD, check the path
         //go through commitTree, check the path.
@@ -446,7 +446,7 @@ public class Repository {
 
         Commit currentCommit = masterCommit;
         while (!currentCommit.getParent().isEmpty()) {
-            for (String currentCommitID: currentCommit.getParent()) {
+            for(String currentCommitID: currentCommit.getParent()) {
                 masterCommitTrack.put(currentCommitID, 1);
                 currentCommit = getCommitFromCommitID(currentCommitID);
             }
@@ -458,7 +458,7 @@ public class Repository {
 
         Commit currentBranchCommit = branchCommit;
         while (!currentBranchCommit.getParent().isEmpty()) {
-            for (String currentBranchCommitID: currentBranchCommit.getParent()) {
+            for(String currentBranchCommitID: currentBranchCommit.getParent()) {
                 if (masterCommitTrack.containsKey(currentBranchCommitID)) {
                     return currentBranchCommitID;
                 }
@@ -591,11 +591,11 @@ public class Repository {
                     makeAdd((String) branchMap.get(allID));
                 } else {
                     //correspond to situation 8, conflict.
-                    File conflictFileInBranch = Utils.join(Blob.BLOBS, allID);
+                    File conflictFileInBranch = Utils.join(Blob.blobs, allID);
                     Blob conflictBlobInBranch = getBlobFromBlobID(allID);
                     String masterContent = "";
                     if (masterID != null) {
-                        File conflictFileInMaster = Utils.join(Blob.BLOBS, masterID);
+                        File conflictFileInMaster = Utils.join(Blob.blobs, masterID);
                         Blob conflictBlobInMaster = getBlobFromBlobID(masterID);
                         masterContent = new String(conflictBlobInMaster.getContentAsByte(), StandardCharsets.UTF_8);
                     }
@@ -615,17 +615,15 @@ public class Repository {
                 String spiltID = (String) spiltTree.get(filePath);
                 if (masterTree.get(filePath) != null && branchID == null && spiltID == null) {
                     //situation 4
-                    continue;
                 } else if (branchID != null && spiltID != null && branchID.equals(spiltID)) {
                     //situation 2
-                    continue;
                 } else {
                     //correspond to situation 8, conflict.
-                    File conflictFileInMaster = Utils.join(Blob.BLOBS, allID);
+                    File conflictFileInMaster = Utils.join(Blob.blobs, allID);
                     Blob conflictBlobInMaster = getBlobFromBlobID(allID);
                     String branchContent = "";
                     if (branchID != null) {
-                        File conflictFileInBranch = Utils.join(Blob.BLOBS, branchID);
+                        File conflictFileInBranch = Utils.join(Blob.blobs, branchID);
                         Blob conflictBlobInBranch = getBlobFromBlobID(branchID);
                         branchContent = new String(conflictBlobInBranch.getContentAsByte(), StandardCharsets.UTF_8);
                     }

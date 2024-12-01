@@ -8,8 +8,8 @@ import static gitlet.Utils.join;
 
 public class Remove implements Serializable {
     /** The removeStage directory. */
-    public static final File REMOVESTAGE = join(Repository.STAGES_DIR, "removeStage");
-    public static final File REMOVEFILE = new File(REMOVESTAGE, "removeFile");
+    public static final File removeStage = join(Repository.STAGES_DIR, "removeStage");
+    public static final File removeFile = new File(removeStage, "removeFile");
 
     //use a TreeMap to cast the path to the file's blobID.
     private TreeMap<String, String> pathToID = new TreeMap<>();
@@ -33,8 +33,8 @@ public class Remove implements Serializable {
         String newID = newBlob.getBlobID();
 
         TreeMap<String, String> originalTreeMap = new TreeMap<>();
-        if (REMOVEFILE.exists()) {
-            originalTreeMap = Utils.readObject(REMOVEFILE, TreeMap.class);
+        if (removeFile.exists()) {
+            originalTreeMap = Utils.readObject(removeFile, TreeMap.class);
         }
 
         //get the masterCommit tree, and judge whether it contains newPath and newBlobID.
@@ -64,6 +64,6 @@ public class Remove implements Serializable {
     }
 
     public void saveRemove() {
-        Utils.writeObject(REMOVEFILE, this.pathToID);
+        Utils.writeObject(removeFile, this.pathToID);
     }
 }

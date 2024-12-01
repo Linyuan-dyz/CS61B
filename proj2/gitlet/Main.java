@@ -85,7 +85,7 @@ public class Main {
                         System.out.println("No need to checkout the current branch.");
                         System.exit(0);
                     }
-                    if (!Utils.join(Head.HEADSFILE, args[1]).exists()) {
+                    if (!Utils.join(Head.headsFile, args[1]).exists()) {
                         System.out.println("No such branch exists.");
                         System.exit(0);
                     }
