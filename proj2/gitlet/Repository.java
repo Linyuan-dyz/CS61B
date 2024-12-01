@@ -68,7 +68,7 @@ public class Repository {
     public static Head getBranch(String branchName) {
         if (Utils.join(Head.MASTERFILE, branchName).exists()) {
             return Utils.readObject(Utils.join(Head.MASTERFILE, branchName), Head.class);
-        } else if (Utils.join(Head.HEADSFILE, branchName).exists()){
+        } else if (Utils.join(Head.HEADSFILE, branchName).exists()) {
             return Utils.readObject(Utils.join(Head.HEADSFILE, branchName), Head.class);
         } else {
             return null;
@@ -118,13 +118,14 @@ public class Repository {
     public static void makeInit() {
         File gitletDir = Utils.join(CWD, ".gitlet");
         if (gitletDir.exists()) {
-            System.out.println("A Gitlet version-control system already exists in the current directory.");
+            System.out.println("A Gitlet version-control " +
+                    "system already exists in the current directory.");
             System.exit(0);
         }
         setUpPresistance();
         Commit init = new Commit();
         init.saveCommit();
-        init.saveShortCommit();;
+        init.saveShortCommit();
         Head master = new Head(init);
         master.saveInMaster();
     }
@@ -145,7 +146,7 @@ public class Repository {
     public static void makeCommit(String message) {
         Commit newCommit = new Commit(message);
         newCommit.saveCommit();
-        newCommit.saveShortCommit();;
+        newCommit.saveShortCommit();
         Commit.cleanAddFile();
         Commit.cleanRemoveFile();
         Head originalMaster = getMaster();
@@ -188,7 +189,7 @@ public class Repository {
         printLog(masterCommit);
         Commit currentCommit = masterCommit;
         while (!currentCommit.getParent().isEmpty()) {
-            for(String currentCommitID: currentCommit.getParent()) {
+            for (String currentCommitID: currentCommit.getParent()) {
                 currentCommit = getCommitFromCommitID(currentCommitID);
                 printLog(currentCommit);
             }
@@ -234,7 +235,7 @@ public class Repository {
         System.out.println("=== Branches ===");
         String[] dir = Head.MASTERFILE.list();
         System.out.println("*" + dir[0]);
-        for(String headName : Utils.plainFilenamesIn(Head.HEADSFILE)) {
+        for (String headName : Utils.plainFilenamesIn(Head.HEADSFILE)) {
             System.out.println(headName);
         }
         System.out.printf("\n");
@@ -300,9 +301,13 @@ public class Repository {
         }
     }
 
-    //Takes the version of the file as it exists in the head commit and puts it in the working directory
-    //if the file isn't in the commit tree, error,
-    //otherwise, get the blobID and find out the blob, write the content into the original file path.
+    /*
+    * Takes the version of the file as it exists in the head commit
+    * and puts it in the working directory
+    * if the file isn't in the commit tree, error,
+    * otherwise, get the blobID and find out the blob,
+    *  write the content into the original file path.
+    */
     public static void checkoutFile(String fileName) {
         checkGitletRepository();
         Commit masterCommit = getMasterCommit();
@@ -346,11 +351,13 @@ public class Repository {
         TreeMap branchCommitTree = branchCommit.getTreeMap();
 
         Collection c = Utils.plainFilenamesIn(CWD);
-        Iterator CWDIter = c.iterator();
-        while (CWDIter.hasNext()) {
-            String fileName = (String) CWDIter.next();
-            if (!currentCommitTree.containsKey(fileName) && branchCommitTree.containsKey(fileName)) {
-                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+        Iterator cwdIter = c.iterator();
+        while (cwdIter.hasNext()) {
+            String fileName = (String) cwdIter.next();
+            if (!currentCommitTree.containsKey(fileName)
+                    && branchCommitTree.containsKey(fileName)) {
+                System.out.println("There is an untracked file in the way;" +
+                        " delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
@@ -443,7 +450,7 @@ public class Repository {
 
         Commit currentCommit = masterCommit;
         while (!currentCommit.getParent().isEmpty()) {
-            for(String currentCommitID: currentCommit.getParent()) {
+            for (String currentCommitID: currentCommit.getParent()) {
                 masterCommitTrack.put(currentCommitID, 1);
                 currentCommit = getCommitFromCommitID(currentCommitID);
             }
@@ -455,14 +462,13 @@ public class Repository {
 
         Commit currentBranchCommit = branchCommit;
         while (!currentBranchCommit.getParent().isEmpty()) {
-            for(String currentBranchCommitID: currentBranchCommit.getParent()) {
+            for (String currentBranchCommitID: currentBranchCommit.getParent()) {
                 if (masterCommitTrack.containsKey(currentBranchCommitID)) {
                     return currentBranchCommitID;
                 }
                 currentBranchCommit = getCommitFromCommitID(currentBranchCommitID);
             }
         }
-
         return null;
     }
 
@@ -513,7 +519,8 @@ public class Repository {
             return;
         }
 
-        //create three trees, masterTree, branchTree, spiltTree, the key is ID, and the value is path.
+        //create three trees, masterTree,
+        //branchTree, spiltTree, the key is ID, and the value is path.
         TreeMap masterTree = masterCommit.getTreeMap();
         Collection masterC = masterTree.keySet();
         Iterator masterIter = masterC.iterator();
@@ -573,7 +580,9 @@ public class Repository {
         while (allIter.hasNext()) {
             String allID = (String) allIter.next();
             //correspond to situation 1/5/8, need further judge.
-            if (!masterMap.containsKey(allID) && branchMap.containsKey(allID) && !spiltMap.containsKey(allID)) {
+            if (!masterMap.containsKey(allID)
+                    && branchMap.containsKey(allID)
+                    && !spiltMap.containsKey(allID)) {
                 String filePath = (String) branchMap.get(allID);
                 String masterID = (String) masterTree.get(filePath);
                 String spiltID = (String) spiltTree.get(filePath);
@@ -594,10 +603,18 @@ public class Repository {
                     if (masterID != null) {
                         File conflictFileInMaster = Utils.join(Blob.BLOBS, masterID);
                         Blob conflictBlobInMaster = getBlobFromBlobID(masterID);
-                        masterContent = new String(conflictBlobInMaster.getContentAsByte(), StandardCharsets.UTF_8);
+                        masterContent = new String
+                                (conflictBlobInMaster.getContentAsByte(),
+                                        StandardCharsets.UTF_8);
                     }
-                    String branchContent = new String(conflictBlobInBranch.getContentAsByte(), StandardCharsets.UTF_8);
-                    String newContent = "<<<<<<< HEAD\n" + masterContent + "=======\n" + branchContent + ">>>>>>>\n";
+                    String branchContent = new String
+                            (conflictBlobInBranch.getContentAsByte(),
+                                    StandardCharsets.UTF_8);
+                    String newContent = "<<<<<<< HEAD\n"
+                            + masterContent
+                            + "=======\n"
+                            + branchContent
+                            + ">>>>>>>\n";
                     //only exist branch file, overwrite the content and stage it.
                     Utils.writeContents(Utils.join(filePath), newContent);
                     conflict = true;
@@ -606,14 +623,18 @@ public class Repository {
             }
 
             //correspond to situation 8, conflict.
-            if (masterMap.containsKey(allID) && !branchMap.containsKey(allID) && !spiltMap.containsKey(allID)) {
+            if (masterMap.containsKey(allID)
+                    && !branchMap.containsKey(allID)
+                    && !spiltMap.containsKey(allID)) {
                 String filePath = (String) masterMap.get(allID);
                 String branchID = (String) branchTree.get(filePath);
                 String spiltID = (String) spiltTree.get(filePath);
                 if (masterTree.get(filePath) != null && branchID == null && spiltID == null) {
                     //situation 4
+                    continue;
                 } else if (branchID != null && spiltID != null && branchID.equals(spiltID)) {
                     //situation 2
+                    continue;
                 } else {
                     //correspond to situation 8, conflict.
                     File conflictFileInMaster = Utils.join(Blob.BLOBS, allID);
@@ -622,10 +643,18 @@ public class Repository {
                     if (branchID != null) {
                         File conflictFileInBranch = Utils.join(Blob.BLOBS, branchID);
                         Blob conflictBlobInBranch = getBlobFromBlobID(branchID);
-                        branchContent = new String(conflictBlobInBranch.getContentAsByte(), StandardCharsets.UTF_8);
+                        branchContent = new String
+                                (conflictBlobInBranch.getContentAsByte(),
+                                        StandardCharsets.UTF_8);
                     }
-                    String masterContent = new String(conflictBlobInMaster.getContentAsByte(), StandardCharsets.UTF_8);
-                    String newContent = "<<<<<<< HEAD\n" + masterContent + "=======\n" + branchContent + ">>>>>>>\n";
+                    String masterContent = new String
+                            (conflictBlobInMaster.getContentAsByte(),
+                                    StandardCharsets.UTF_8);
+                    String newContent = "<<<<<<< HEAD\n"
+                            + masterContent
+                            + "=======\n"
+                            + branchContent
+                            + ">>>>>>>\n";
                     //masterFile must exist.
                     Utils.writeContents(Utils.join(filePath), newContent);
                     conflict = true;
@@ -633,15 +662,23 @@ public class Repository {
             }
 
             //correspond to situation 6, remove the file.
-            if (masterMap.containsKey(allID) && !branchMap.containsKey(allID) && spiltMap.containsKey(allID)) {
+            if (masterMap.containsKey(allID)
+                    && !branchMap.containsKey(allID)
+                    && spiltMap.containsKey(allID)) {
                 String filePath = (String) masterMap.get(allID);
-                if (masterTree.get(filePath) != null && branchTree.get(filePath) == null && spiltTree.get(filePath) != null) {
+                if (masterTree.get(filePath) != null
+                        && branchTree.get(filePath) == null
+                        && spiltTree.get(filePath) != null) {
                     makeRemove((String) masterMap.get(allID));
                 }
             }
         }
-        String commitMessage = "Merged " + branchName + " into " + getMaster().getBranchName() + ".";
-        LinkedList<String> newParent = new LinkedList<>(List.of(masterCommitPointID, branchCommitPointID));
+        String commitMessage = "Merged "
+                + branchName
+                + " into "
+                + getMaster().getBranchName() + ".";
+        LinkedList<String> newParent = new LinkedList<>
+                (List.of(masterCommitPointID, branchCommitPointID));
         if (conflict) {
             System.out.println("Encountered a merge conflict.");
         }

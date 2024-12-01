@@ -115,7 +115,7 @@ public class Commit implements Serializable {
         this.shortCommitName = new File(COMMITS, commitID8);
     }
 
-    public Commit (String message, LinkedList newParent) {
+    public Commit(String message, LinkedList newParent) {
         this.message = message;
         this.date = new Date();
         this.standerTime = dateToTimeStamp(date);
@@ -153,9 +153,9 @@ public class Commit implements Serializable {
     }
 
     private LinkedList<String> getMasterCommitParent() {
-        Commit MasterCommit = Repository.getMasterCommit();
+        Commit masterCommit = Repository.getMasterCommit();
         LinkedList<String> newParent = new LinkedList<>();
-        newParent.addFirst(MasterCommit.getCommitID());
+        newParent.addFirst(masterCommit.getCommitID());
         return newParent;
     }
 
