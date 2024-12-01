@@ -118,8 +118,8 @@ public class Repository {
     public static void makeInit() {
         File gitletDir = Utils.join(CWD, ".gitlet");
         if (gitletDir.exists()) {
-            System.out.println("A Gitlet version-control " +
-                    "system already exists in the current directory.");
+            System.out.println("A Gitlet version-control "
+                    + "system already exists in the current directory.");
             System.exit(0);
         }
         setUpPresistance();
@@ -356,8 +356,8 @@ public class Repository {
             String fileName = (String) cwdIter.next();
             if (!currentCommitTree.containsKey(fileName)
                     && branchCommitTree.containsKey(fileName)) {
-                System.out.println("There is an untracked file in the way;" +
-                        " delete it, or add and commit it first.");
+                System.out.println("There is an untracked file in the way;"
+                        + " delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
@@ -473,7 +473,6 @@ public class Repository {
     }
 
     public static void getMerge(String branchName) {
-
         if (!getAddTree().isEmpty() || !getRemoveTree().isEmpty()) {
             System.out.println("You have uncommitted changes.");
             return;
@@ -603,13 +602,13 @@ public class Repository {
                     if (masterID != null) {
                         File conflictFileInMaster = Utils.join(Blob.BLOBS, masterID);
                         Blob conflictBlobInMaster = getBlobFromBlobID(masterID);
+                        byte[] maContent = conflictBlobInMaster.getContentAsByte();
                         masterContent = new String
-                                (conflictBlobInMaster.getContentAsByte(),
-                                        StandardCharsets.UTF_8);
+                                (maContent, StandardCharsets.UTF_8);
                     }
+                    byte[] brContent = conflictBlobInBranch.getContentAsByte();
                     String branchContent = new String
-                            (conflictBlobInBranch.getContentAsByte(),
-                                    StandardCharsets.UTF_8);
+                            (brContent, StandardCharsets.UTF_8);
                     String newContent = "<<<<<<< HEAD\n"
                             + masterContent
                             + "=======\n"
@@ -618,7 +617,8 @@ public class Repository {
                     //only exist branch file, overwrite the content and stage it.
                     Utils.writeContents(Utils.join(filePath), newContent);
                     conflict = true;
-                    //in case of the situation is judged by the latter again, when the two files have different content.
+                    //in case of the situation is judged by the latter again,
+                    // when the two files have different content.
                 }
             }
 
@@ -643,13 +643,13 @@ public class Repository {
                     if (branchID != null) {
                         File conflictFileInBranch = Utils.join(Blob.BLOBS, branchID);
                         Blob conflictBlobInBranch = getBlobFromBlobID(branchID);
+                        byte[] brContent = conflictBlobInBranch.getContentAsByte();
                         branchContent = new String
-                                (conflictBlobInBranch.getContentAsByte(),
-                                        StandardCharsets.UTF_8);
+                                (brContent, StandardCharsets.UTF_8);
                     }
+                    byte[] maContent = conflictBlobInMaster.getContentAsByte();
                     String masterContent = new String
-                            (conflictBlobInMaster.getContentAsByte(),
-                                    StandardCharsets.UTF_8);
+                            (maContent, StandardCharsets.UTF_8);
                     String newContent = "<<<<<<< HEAD\n"
                             + masterContent
                             + "=======\n"
@@ -677,8 +677,8 @@ public class Repository {
                 + branchName
                 + " into "
                 + getMaster().getBranchName() + ".";
-        LinkedList<String> newParent = new LinkedList<>
-                (List.of(masterCommitPointID, branchCommitPointID));
+        LinkedList<String> newParent = new LinkedList<>(List.of(masterCommitPointID,
+                branchCommitPointID));
         if (conflict) {
             System.out.println("Encountered a merge conflict.");
         }
