@@ -472,55 +472,29 @@ public class Repository {
         return null;
     }
 
-    public static void getMerge(String branchName) {
-        if (!getAddTree().isEmpty() || !getRemoveTree().isEmpty()) {
-            System.out.println("You have uncommitted changes.");
-            return;
-        }
-
+    private static TreeMap getMasterTree() {
         Commit masterCommit = getMasterCommit();
-        String masterCommitPointID = masterCommit.getCommitID();
-
-        //System.out.println(masterCommitPointID);
-
-        Head branchHead = getBranch(branchName);
-        if (branchHead == null) {
-            System.out.println("A branch with that name does not exist.");
-            return;
-        }
-        String branchCommitID = branchHead.getCommitID();
-
-        checkCWDFileTracked(branchName);
-
-        //System.out.println(branchCommitID);
-
-        Commit branchCommit = getCommitFromCommitID(branchCommitID);
-        String branchCommitPointID = branchCommit.getCommitID();
-        String spiltPointID = getSplitPointID(branchName);
-
-        //System.out.println(spiltPointID);
-
-        Commit spiltPoint = getCommitFromCommitID(spiltPointID);
-
-        if (masterCommitPointID.equals(branchCommitPointID)) {
-            System.out.println("Cannot merge a branch with itself.");
-            return;
-        }
-
-        if (branchCommitPointID.equals(spiltPointID)) {
-            System.out.println("Given branch is an ancestor of the current branch.");
-            return;
-        }
-
-        if (masterCommitPointID.equals(spiltPointID)) {
-            checkoutBranch(branchName);
-            System.out.println("Current branch fast-forwarded.");
-            return;
-        }
-
-        //create three trees, masterTree,
-        //branchTree, spiltTree, the key is ID, and the value is path.
         TreeMap masterTree = masterCommit.getTreeMap();
+        return masterTree;
+    }
+
+    private static TreeMap getBranchTree(String branchName) {
+        Head branchHead = getBranch(branchName);
+        String branchCommitID = branchHead.getCommitID();
+        Commit branchCommit = getCommitFromCommitID(branchCommitID);
+        TreeMap branchTree = branchCommit.getTreeMap();
+        return branchTree;
+    }
+
+    private static TreeMap getSpiltTree(String branchName) {
+        String spiltPointID = getSplitPointID(branchName);
+        Commit spiltPoint = getCommitFromCommitID(spiltPointID);
+        TreeMap spiltTree = spiltPoint.getTreeMap();
+        return spiltTree;
+    }
+
+    private static TreeMap createMasterMap() {
+        TreeMap masterTree = getMasterTree();
         Collection masterC = masterTree.keySet();
         Iterator masterIter = masterC.iterator();
         TreeMap masterMap = new TreeMap<>();
@@ -528,8 +502,11 @@ public class Repository {
             String newPath = (String) masterIter.next();
             masterMap.put(masterTree.get(newPath), newPath);
         }
+        return masterMap;
+    }
 
-        TreeMap branchTree = branchCommit.getTreeMap();
+    private static TreeMap createBranchMap(String branchName) {
+        TreeMap branchTree = getBranchTree(branchName);
         Collection branchC = branchTree.keySet();
         Iterator branchIter = branchC.iterator();
         TreeMap branchMap = new TreeMap<>();
@@ -537,8 +514,11 @@ public class Repository {
             String newPath = (String) branchIter.next();
             branchMap.put(branchTree.get(newPath), newPath);
         }
+        return branchMap;
+    }
 
-        TreeMap spiltTree = spiltPoint.getTreeMap();
+    private static TreeMap createSpiltMap(String branchName) {
+        TreeMap spiltTree = getSpiltTree(branchName);
         Collection spiltC = spiltTree.keySet();
         Iterator spiltIter = spiltC.iterator();
         TreeMap spiltMap = new TreeMap<>();
@@ -546,6 +526,15 @@ public class Repository {
             String newPath = (String) spiltIter.next();
             spiltMap.put(spiltTree.get(newPath), newPath);
         }
+        return spiltMap;
+    }
+
+    private static TreeMap createAllTree(String branchName) {
+        //create three trees, masterTree,
+        //branchTree, spiltTree, the key is ID, and the value is path.
+        TreeMap masterMap = createMasterMap();
+        TreeMap branchMap = createBranchMap(branchName);
+        TreeMap spiltMap = createSpiltMap(branchName);
         //combine all IDToPath in the allMap
         TreeMap allMap = new TreeMap<>();
         Collection c1 = masterMap.keySet();
@@ -570,93 +559,193 @@ public class Repository {
                 allMap.put(newID, spiltMap.get(newID));
             }
         }
+        return allMap;
+    }
 
+    public static boolean checkClearAndExist(String branchName) {
+        if (!getAddTree().isEmpty() || !getRemoveTree().isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+            return false;
+        }
+        Head branchHead = getBranch(branchName);
+        if (branchHead == null) {
+            System.out.println("A branch with that name does not exist.");
+            return false;
+        }
+        checkCWDFileTracked(branchName);
+        return true;
+    }
+
+    public static boolean checkBranchPosition(String branchName) {
+        Commit masterCommit = getMasterCommit();
+        String masterCommitPointID = masterCommit.getCommitID();
+        Head branchHead = getBranch(branchName);
+        String branchCommitID = branchHead.getCommitID();
+        Commit branchCommit = getCommitFromCommitID(branchCommitID);
+        String branchCommitPointID = branchCommit.getCommitID();
+        String spiltPointID = getSplitPointID(branchName);
+
+        if (masterCommitPointID.equals(branchCommitPointID)) {
+            System.out.println("Cannot merge a branch with itself.");
+            return false;
+        }
+        if (branchCommitPointID.equals(spiltPointID)) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+            return false;
+        }
+        if (masterCommitPointID.equals(spiltPointID)) {
+            checkoutBranch(branchName);
+            System.out.println("Current branch fast-forwarded.");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkSituation158(String branchName, String allID) {
         boolean conflict = false;
+        Commit masterCommit = getMasterCommit();
+        String masterCommitPointID = masterCommit.getCommitID();
+        Head branchHead = getBranch(branchName);
+        String branchCommitID = branchHead.getCommitID();
+        Commit branchCommit = getCommitFromCommitID(branchCommitID);
+        String branchCommitPointID = branchCommit.getCommitID();
+        TreeMap allMap = createAllTree(branchName);
+        TreeMap masterMap = createMasterMap();
+        TreeMap branchMap = createBranchMap(branchName);
+        TreeMap spiltMap = createSpiltMap(branchName);
+        TreeMap masterTree = getMasterTree();
+        TreeMap branchTree = getBranchTree(branchName);
+        TreeMap spiltTree = getSpiltTree(branchName);
+        if (!masterMap.containsKey(allID)
+                && branchMap.containsKey(allID)
+                && !spiltMap.containsKey(allID)) {
+            String filePath = (String) branchMap.get(allID);
+            String masterID = (String) masterTree.get(filePath);
+            String spiltID = (String) spiltTree.get(filePath);
+            //correspond to situation 5, checkout the file and adds it.
+            if (masterID == null && branchTree.get(filePath) != null && spiltID == null) {
+                checkoutFileWithCommitID(branchCommitID, filePath);
+                Blob newBlob = getBlobFromBlobID(allID);
+                makeAddWithBlob(newBlob);
+            } else if (masterID != null && spiltID != null && masterID.equals(spiltID)) {
+                //correspond to situation 1, add the file.
+                checkoutFileWithCommitID(branchCommitID, filePath);
+                makeAdd((String) branchMap.get(allID));
+            } else {
+                //correspond to situation 8, conflict.
+                File conflictFileInBranch = Utils.join(Blob.BLOBS, allID);
+                Blob conflictBlobInBranch = getBlobFromBlobID(allID);
+                String masterContent = "";
+                if (masterID != null) {
+                    File conflictFileInMaster = Utils.join(Blob.BLOBS, masterID);
+                    Blob conflictBlobInMaster = getBlobFromBlobID(masterID);
+                    byte[] maContent = conflictBlobInMaster.getContentAsByte();
+                    masterContent = new String(maContent, StandardCharsets.UTF_8);
+                }
+                byte[] brContent = conflictBlobInBranch.getContentAsByte();
+                String branchContent = new String(brContent, StandardCharsets.UTF_8);
+                String newContent = "<<<<<<< HEAD\n"
+                        + masterContent
+                        + "=======\n"
+                        + branchContent
+                        + ">>>>>>>\n";
+                //only exist branch file, overwrite the content and stage it.
+                Utils.writeContents(Utils.join(filePath), newContent);
+                conflict = true;
+                //in case of the situation is judged by the latter again,
+                // when the two files have different content.
+            }
+        }
+        return conflict;
+    }
 
+    public static boolean checkSituation248(String branchName, String allID) {
+        boolean conflict = false;
+        Commit masterCommit = getMasterCommit();
+        String masterCommitPointID = masterCommit.getCommitID();
+        Head branchHead = getBranch(branchName);
+        String branchCommitID = branchHead.getCommitID();
+        Commit branchCommit = getCommitFromCommitID(branchCommitID);
+        String branchCommitPointID = branchCommit.getCommitID();
+        TreeMap allMap = createAllTree(branchName);
+        TreeMap masterMap = createMasterMap();
+        TreeMap branchMap = createBranchMap(branchName);
+        TreeMap spiltMap = createSpiltMap(branchName);
+        TreeMap masterTree = getMasterTree();
+        TreeMap branchTree = getBranchTree(branchName);
+        TreeMap spiltTree = getSpiltTree(branchName);
+        if (masterMap.containsKey(allID)
+                && !branchMap.containsKey(allID)
+                && !spiltMap.containsKey(allID)) {
+            String filePath = (String) masterMap.get(allID);
+            String branchID = (String) branchTree.get(filePath);
+            String spiltID = (String) spiltTree.get(filePath);
+            if (masterTree.get(filePath) != null && branchID == null && spiltID == null) {
+                //situation 4
+                return conflict;
+            } else if (branchID != null && spiltID != null && branchID.equals(spiltID)) {
+                //situation 2
+                return conflict;
+            } else {
+                //correspond to situation 8, conflict.
+                File conflictFileInMaster = Utils.join(Blob.BLOBS, allID);
+                Blob conflictBlobInMaster = getBlobFromBlobID(allID);
+                String branchContent = "";
+                if (branchID != null) {
+                    File conflictFileInBranch = Utils.join(Blob.BLOBS, branchID);
+                    Blob conflictBlobInBranch = getBlobFromBlobID(branchID);
+                    byte[] brContent = conflictBlobInBranch.getContentAsByte();
+                    branchContent = new String(brContent, StandardCharsets.UTF_8);
+                }
+                byte[] maContent = conflictBlobInMaster.getContentAsByte();
+                String masterContent = new String(maContent, StandardCharsets.UTF_8);
+                String newContent = "<<<<<<< HEAD\n"
+                        + masterContent
+                        + "=======\n"
+                        + branchContent
+                        + ">>>>>>>\n";
+                //masterFile must exist.
+                Utils.writeContents(Utils.join(filePath), newContent);
+                conflict = true;
+            }
+        }
+        return conflict;
+    }
+
+    public static void getMerge(String branchName) {
+        if (!checkClearAndExist(branchName)) {
+            return;
+        }
+        Commit masterCommit = getMasterCommit();
+        String masterCommitPointID = masterCommit.getCommitID();
+        Head branchHead = getBranch(branchName);
+        String branchCommitID = branchHead.getCommitID();
+        Commit branchCommit = getCommitFromCommitID(branchCommitID);
+        String branchCommitPointID = branchCommit.getCommitID();
+        if (!checkBranchPosition(branchName)) {
+            return;
+        }
+        TreeMap allMap = createAllTree(branchName);
+        TreeMap masterMap = createMasterMap();
+        TreeMap branchMap = createBranchMap(branchName);
+        TreeMap spiltMap = createSpiltMap(branchName);
+        TreeMap masterTree = getMasterTree();
+        TreeMap branchTree = getBranchTree(branchName);
+        TreeMap spiltTree = getSpiltTree(branchName);
+        boolean conflict = false;
         //compare allMap to the three trees, judge the seven situations.
         Collection allC = allMap.keySet();
         Iterator allIter = allC.iterator();
         while (allIter.hasNext()) {
             String allID = (String) allIter.next();
             //correspond to situation 1/5/8, need further judge.
-            if (!masterMap.containsKey(allID)
-                    && branchMap.containsKey(allID)
-                    && !spiltMap.containsKey(allID)) {
-                String filePath = (String) branchMap.get(allID);
-                String masterID = (String) masterTree.get(filePath);
-                String spiltID = (String) spiltTree.get(filePath);
-                //correspond to situation 5, checkout the file and adds it.
-                if (masterID == null && branchTree.get(filePath) != null && spiltID == null) {
-                    checkoutFileWithCommitID(branchCommitID, filePath);
-                    Blob newBlob = getBlobFromBlobID(allID);
-                    makeAddWithBlob(newBlob);
-                } else if (masterID != null && spiltID != null && masterID.equals(spiltID)) {
-                    //correspond to situation 1, add the file.
-                    checkoutFileWithCommitID(branchCommitID, filePath);
-                    makeAdd((String) branchMap.get(allID));
-                } else {
-                    //correspond to situation 8, conflict.
-                    File conflictFileInBranch = Utils.join(Blob.BLOBS, allID);
-                    Blob conflictBlobInBranch = getBlobFromBlobID(allID);
-                    String masterContent = "";
-                    if (masterID != null) {
-                        File conflictFileInMaster = Utils.join(Blob.BLOBS, masterID);
-                        Blob conflictBlobInMaster = getBlobFromBlobID(masterID);
-                        byte[] maContent = conflictBlobInMaster.getContentAsByte();
-                        masterContent = new String(maContent, StandardCharsets.UTF_8);
-                    }
-                    byte[] brContent = conflictBlobInBranch.getContentAsByte();
-                    String branchContent = new String(brContent, StandardCharsets.UTF_8);
-                    String newContent = "<<<<<<< HEAD\n"
-                            + masterContent
-                            + "=======\n"
-                            + branchContent
-                            + ">>>>>>>\n";
-                    //only exist branch file, overwrite the content and stage it.
-                    Utils.writeContents(Utils.join(filePath), newContent);
-                    conflict = true;
-                    //in case of the situation is judged by the latter again,
-                    // when the two files have different content.
-                }
+            if (checkSituation158(branchName, allID)) {
+                conflict = true;
             }
-
-            //correspond to situation 8, conflict.
-            if (masterMap.containsKey(allID)
-                    && !branchMap.containsKey(allID)
-                    && !spiltMap.containsKey(allID)) {
-                String filePath = (String) masterMap.get(allID);
-                String branchID = (String) branchTree.get(filePath);
-                String spiltID = (String) spiltTree.get(filePath);
-                if (masterTree.get(filePath) != null && branchID == null && spiltID == null) {
-                    //situation 4
-                    continue;
-                } else if (branchID != null && spiltID != null && branchID.equals(spiltID)) {
-                    //situation 2
-                    continue;
-                } else {
-                    //correspond to situation 8, conflict.
-                    File conflictFileInMaster = Utils.join(Blob.BLOBS, allID);
-                    Blob conflictBlobInMaster = getBlobFromBlobID(allID);
-                    String branchContent = "";
-                    if (branchID != null) {
-                        File conflictFileInBranch = Utils.join(Blob.BLOBS, branchID);
-                        Blob conflictBlobInBranch = getBlobFromBlobID(branchID);
-                        byte[] brContent = conflictBlobInBranch.getContentAsByte();
-                        branchContent = new String(brContent, StandardCharsets.UTF_8);
-                    }
-                    byte[] maContent = conflictBlobInMaster.getContentAsByte();
-                    String masterContent = new String(maContent, StandardCharsets.UTF_8);
-                    String newContent = "<<<<<<< HEAD\n"
-                            + masterContent
-                            + "=======\n"
-                            + branchContent
-                            + ">>>>>>>\n";
-                    //masterFile must exist.
-                    Utils.writeContents(Utils.join(filePath), newContent);
-                    conflict = true;
-                }
+            //correspond to situation 2/4/8, conflict.
+            if (checkSituation248(branchName, allID)) {
+                conflict = true;
             }
-
             //correspond to situation 6, remove the file.
             if (masterMap.containsKey(allID)
                     && !branchMap.containsKey(allID)
@@ -669,16 +758,13 @@ public class Repository {
                 }
             }
         }
-        String commitMessage = "Merged "
-                + branchName
-                + " into "
+        String commitMessage = "Merged " + branchName + " into "
                 + getMaster().getBranchName() + ".";
-        LinkedList<String> newParent = new LinkedList<>(List.of(masterCommitPointID,
-                branchCommitPointID));
+        LinkedList<String> newParent =
+                new LinkedList<>(List.of(masterCommitPointID, branchCommitPointID));
         if (conflict) {
             System.out.println("Encountered a merge conflict.");
         }
-
         makeCommitWithParent(commitMessage, newParent);
     }
 }
