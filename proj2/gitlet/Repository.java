@@ -603,12 +603,10 @@ public class Repository {
                         File conflictFileInMaster = Utils.join(Blob.BLOBS, masterID);
                         Blob conflictBlobInMaster = getBlobFromBlobID(masterID);
                         byte[] maContent = conflictBlobInMaster.getContentAsByte();
-                        masterContent = new String
-                                (maContent, StandardCharsets.UTF_8);
+                        masterContent = new String(maContent, StandardCharsets.UTF_8);
                     }
                     byte[] brContent = conflictBlobInBranch.getContentAsByte();
-                    String branchContent = new String
-                            (brContent, StandardCharsets.UTF_8);
+                    String branchContent = new String(brContent, StandardCharsets.UTF_8);
                     String newContent = "<<<<<<< HEAD\n"
                             + masterContent
                             + "=======\n"
@@ -644,12 +642,10 @@ public class Repository {
                         File conflictFileInBranch = Utils.join(Blob.BLOBS, branchID);
                         Blob conflictBlobInBranch = getBlobFromBlobID(branchID);
                         byte[] brContent = conflictBlobInBranch.getContentAsByte();
-                        branchContent = new String
-                                (brContent, StandardCharsets.UTF_8);
+                        branchContent = new String(brContent, StandardCharsets.UTF_8);
                     }
                     byte[] maContent = conflictBlobInMaster.getContentAsByte();
-                    String masterContent = new String
-                            (maContent, StandardCharsets.UTF_8);
+                    String masterContent = new String(maContent, StandardCharsets.UTF_8);
                     String newContent = "<<<<<<< HEAD\n"
                             + masterContent
                             + "=======\n"
