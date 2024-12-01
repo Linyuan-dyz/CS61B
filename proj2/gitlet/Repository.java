@@ -450,7 +450,7 @@ public class Repository {
     }
 
     public static void getMerge(String branchName) {
-        checkCWDFileTracked(branchName);
+
         if (!getAddTree().isEmpty() || !getRemoveTree().isEmpty()) {
             System.out.println("You have uncommitted changes.");
             return;
@@ -468,6 +468,7 @@ public class Repository {
         }
         String branchCommitID = branchHead.getCommitID();
 
+        checkCWDFileTracked(branchName);
 
         //System.out.println(branchCommitID);
 
@@ -569,27 +570,23 @@ public class Repository {
                     makeAdd((String) branchMap.get(allID));
                 } else {
                     //correspond to situation 8, conflict.
-                    File conflictFileInMaster = Utils.join(Blob.blobs, masterID);
                     File conflictFileInBranch = Utils.join(Blob.blobs, allID);
-                    Blob conflictBlobInMaster = getBlobFromBlobID(masterID);
                     Blob conflictBlobInBranch = getBlobFromBlobID(allID);
                     String masterContent = "";
-                    if (conflictFileInMaster.exists()) {
+                    if (masterID != null) {
+                        File conflictFileInMaster = Utils.join(Blob.blobs, masterID);
+                        Blob conflictBlobInMaster = getBlobFromBlobID(masterID);
                         masterContent = new String(conflictBlobInMaster.getContentAsByte(), StandardCharsets.UTF_8);
                     }
                     String branchContent = new String(conflictBlobInBranch.getContentAsByte(), StandardCharsets.UTF_8);
-                    String newContent = "<<<<<<< HEAD\n" +
-                            masterContent +
-                            "=======\n" +
-                            branchContent +
-                            ">>>>>>>";
+                    String newContent = "<<<<<<< HEAD\n" + masterContent + "=======\n" + branchContent + ">>>>>>>\n";
                     //only exist branch file, overwrite the content and stage it.
                     Utils.writeContents(Utils.join(filePath), newContent);
                     conflict = true;
+                    //in case of the situation is judged by the latter again, when the two files have different content.
                 }
             }
 
-            /*
             //correspond to situation 8, conflict.
             if (masterMap.containsKey(allID) && !branchMap.containsKey(allID) && !spiltMap.containsKey(allID)) {
                 String filePath = (String) masterMap.get(allID);
@@ -601,24 +598,19 @@ public class Repository {
                     //correspond to situation 8, conflict.
                     File conflictFileInMaster = Utils.join(Blob.blobs, allID);
                     Blob conflictBlobInMaster = getBlobFromBlobID(allID);
-                    File conflictFileInBranch = Utils.join(Blob.blobs, branchID);
-                    Blob conflictBlobInBranch = getBlobFromBlobID(branchID);
                     String branchContent = "";
-                    if (conflictFileInBranch.exists()) {
+                    if (branchID != null) {
+                        File conflictFileInBranch = Utils.join(Blob.blobs, branchID);
+                        Blob conflictBlobInBranch = getBlobFromBlobID(branchID);
                         branchContent = new String(conflictBlobInBranch.getContentAsByte(), StandardCharsets.UTF_8);
                     }
                     String masterContent = new String(conflictBlobInMaster.getContentAsByte(), StandardCharsets.UTF_8);
-                    String newContent = "<<<<<<< HEAD\n" +
-                            masterContent + "\n" +
-                            "=======\n" +
-                            branchContent + "\n" +
-                            ">>>>>>>";
+                    String newContent = "<<<<<<< HEAD\n" + masterContent + "=======\n" + branchContent + ">>>>>>>\n";
                     //masterFile must exist.
-                    Utils.writeContents(conflictFileInMaster, newContent);
+                    Utils.writeContents(Utils.join(filePath), newContent);
                     conflict = true;
                 }
             }
-             */
 
             //correspond to situation 6, remove the file.
             if (masterMap.containsKey(allID) && !branchMap.containsKey(allID) && spiltMap.containsKey(allID)) {
