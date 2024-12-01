@@ -580,6 +580,7 @@ public class Repository {
                     makeAddWithBlob(newBlob);
                 } else if (masterID != null && spiltID != null && masterID.equals(spiltID)) {
                     //correspond to situation 1, add the file.
+                    checkoutFileWithCommitID(branchCommitID, filePath);
                     makeAdd((String) branchMap.get(allID));
                 } else {
                     //correspond to situation 8, conflict.
@@ -606,7 +607,9 @@ public class Repository {
                 String branchID = (String) branchTree.get(filePath);
                 String spiltID = (String) spiltTree.get(filePath);
                 if (masterTree.get(filePath) != null && branchID == null && spiltID == null) {
-                    //stays empty
+                    //situation 4
+                } else if (branchID != null && spiltID != null && branchID.equals(spiltID)) {
+                    //situation 2
                 } else {
                     //correspond to situation 8, conflict.
                     File conflictFileInMaster = Utils.join(Blob.blobs, allID);
