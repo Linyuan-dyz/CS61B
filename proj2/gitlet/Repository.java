@@ -2,10 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.TreeMap;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -159,6 +156,16 @@ public class Repository {
         master.saveInMaster();
     }
 
+    public static void makeCommitWithParent(String message, LinkedList<String> newParent) {
+        Commit newCommit = new Commit(message, newParent);
+        newCommit.saveCommit();
+        Commit.cleanAddFile();
+        Commit.cleanRemoveFile();
+        Head originalMaster = getMaster();
+        Head master = new Head(originalMaster.getBranchName(), newCommit);
+        master.saveInMaster();
+    }
+
     public static void makeRemove(String path) {
 
         Blob newBlob = new Blob(path);
@@ -181,10 +188,12 @@ public class Repository {
         checkGitletRepository();
         Commit masterCommit = getMasterCommit();
         printLog(masterCommit);
-        Commit currentCommit;
-        for(String currentCommitID: masterCommit.getParent()) {
-            currentCommit = getCommitFromCommitID(currentCommitID);
-            printLog(currentCommit);
+        Commit currentCommit = masterCommit;
+        while (!currentCommit.getParent().isEmpty()) {
+            for(String currentCommitID: currentCommit.getParent()) {
+                currentCommit = getCommitFromCommitID(currentCommitID);
+                printLog(currentCommit);
+            }
         }
     }
 
@@ -427,25 +436,29 @@ public class Repository {
 
         TreeMap masterCommitTrack = new TreeMap<>();
         masterCommitTrack.put(masterCommitPointID, 1);
-        Collection m = masterCommit.getParent();
-        Iterator masterIter = m.iterator();
-        while (masterIter.hasNext()) {
-            masterCommitTrack.put(masterIter.next(), 1);
+
+        Commit currentCommit = masterCommit;
+        while (!currentCommit.getParent().isEmpty()) {
+            for(String currentCommitID: currentCommit.getParent()) {
+                masterCommitTrack.put(currentCommitID, 1);
+                currentCommit = getCommitFromCommitID(currentCommitID);
+            }
         }
 
         if (masterCommitTrack.containsKey(branchCommitPointID)) {
             return branchCommitPointID;
         }
 
-        Collection b = branchCommit.getParent();
-        Iterator branchIter = b.iterator();
-
-        while (branchIter.hasNext()) {
-            branchCommitPointID = (String) branchIter.next();
-            if (masterCommitTrack.containsKey(branchCommitPointID)) {
-                return branchCommitPointID;
+        Commit currentBranchCommit = branchCommit;
+        while (!currentBranchCommit.getParent().isEmpty()) {
+            for(String currentBranchCommitID: currentBranchCommit.getParent()) {
+                if (masterCommitTrack.containsKey(currentBranchCommitID)) {
+                    return currentBranchCommitID;
+                }
+                currentBranchCommit = getCommitFromCommitID(currentBranchCommitID);
             }
         }
+
         return null;
     }
 
@@ -480,7 +493,7 @@ public class Repository {
 
         Commit spiltPoint = getCommitFromCommitID(spiltPointID);
 
-        if (masterCommitPointID.equals(spiltPointID)) {
+        if (masterCommitPointID.equals(branchCommitPointID)) {
             System.out.println("Cannot merge a branch with itself.");
             return;
         }
@@ -621,10 +634,11 @@ public class Repository {
             }
         }
         String commitMessage = "Merged " + branchName + " into " + getMaster().getBranchName() + ".";
+        LinkedList<String> newParent = new LinkedList<>(List.of(masterCommitPointID, branchCommitPointID));
         if (conflict) {
             System.out.println("Encountered a merge conflict.");
         }
 
-        makeCommit(commitMessage);
+        makeCommitWithParent(commitMessage, newParent);
     }
 }

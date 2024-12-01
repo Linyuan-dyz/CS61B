@@ -99,12 +99,12 @@ public class Commit implements Serializable {
         this.commitName = new File(commits, commitID);
     }
 
-    public Commit (String message, TreeMap map) {
+    public Commit (String message, LinkedList newParent) {
         this.message = message;
         this.date = new Date();
         this.standerTime = dateToTimeStamp(date);
-        this.parent = getMasterCommitParent();
-        this.pathToBlobID = map;
+        this.parent = newParent;
+        this.pathToBlobID = combineAddAndRemoveAndParent();
         this.commitID = Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
         this.commitName = new File(commits, commitID);
     }
@@ -131,7 +131,7 @@ public class Commit implements Serializable {
 
     private LinkedList<String> getMasterCommitParent() {
         Commit MasterCommit = Repository.getMasterCommit();
-        LinkedList<String> newParent = MasterCommit.getParent();
+        LinkedList<String> newParent = new LinkedList<>();
         newParent.addFirst(MasterCommit.getCommitID());
         return newParent;
     }
