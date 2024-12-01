@@ -1,6 +1,5 @@
 package gitlet;
 
-// TODO: any imports you need here
 
 import java.io.File;
 import java.io.Serializable;
@@ -8,22 +7,21 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.LinkedList;
-import java.util.List;
 
 import static gitlet.Utils.join;
 
 /** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
+ *
  *  does at a high level.
  *
- *  @author TODO
+ *  @author
  */
 public class Commit implements Serializable {
     /** The commits directory. */
-    public static final File commits = join(Repository.OBJECTS_DIR, "commits");
+    public static final File COMMITS = join(Repository.OBJECTS_DIR, "commits");
 
     /**
-     * TODO: add instance variables here.
+     *
      * 1.message
      * 2.date
      * 3.standerTime
@@ -97,10 +95,11 @@ public class Commit implements Serializable {
         this.standerTime = dateToTimeStamp(date);
         this.parent = new LinkedList<>();
         this.pathToBlobID = new TreeMap<>();
-        this.commitID = Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
-        this.commitName = new File(commits, commitID);
+        this.commitID = Utils.sha1(message, standerTime,
+                pathToBlobID.toString(), parent.toString());
+        this.commitName = new File(COMMITS, commitID);
         this.commitID8 = this.commitID.substring(0, 8);
-        this.shortCommitName = new File(commits, commitID8);
+        this.shortCommitName = new File(COMMITS, commitID8);
     }
 
     public Commit(String message) {
@@ -109,10 +108,11 @@ public class Commit implements Serializable {
         this.standerTime = dateToTimeStamp(date);
         this.parent = getMasterCommitParent();
         this.pathToBlobID = combineAddAndRemoveAndParent();
-        this.commitID = Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
-        this.commitName = new File(commits, commitID);
+        this.commitID = Utils.sha1(message, standerTime,
+                pathToBlobID.toString(), parent.toString());
+        this.commitName = new File(COMMITS, commitID);
         this.commitID8 = this.commitID.substring(0, 8);
-        this.shortCommitName = new File(commits, commitID8);
+        this.shortCommitName = new File(COMMITS, commitID8);
     }
 
     public Commit (String message, LinkedList newParent) {
@@ -121,10 +121,11 @@ public class Commit implements Serializable {
         this.standerTime = dateToTimeStamp(date);
         this.parent = newParent;
         this.pathToBlobID = combineAddAndRemoveAndParent();
-        this.commitID = Utils.sha1(message, standerTime, pathToBlobID.toString(), parent.toString());
-        this.commitName = new File(commits, commitID);
+        this.commitID = Utils.sha1(message, standerTime,
+                pathToBlobID.toString(), parent.toString());
+        this.commitName = new File(COMMITS, commitID);
         this.commitID8 = this.commitID.substring(0, 8);
-        this.shortCommitName = new File(commits, commitID8);
+        this.shortCommitName = new File(COMMITS, commitID8);
     }
 
     public void saveCommit() {

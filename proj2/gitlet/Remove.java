@@ -8,8 +8,8 @@ import static gitlet.Utils.join;
 
 public class Remove implements Serializable {
     /** The removeStage directory. */
-    public static final File removeStage = join(Repository.STAGES_DIR, "removeStage");
-    public static final File removeFile = new File(removeStage, "removeFile");
+    public static final File REMOVESTAGE = join(Repository.STAGES_DIR, "removeStage");
+    public static final File REMOVEFILE = new File(REMOVESTAGE, "removeFile");
 
     //use a TreeMap to cast the path to the file's blobID.
     private TreeMap<String, String> pathToID = new TreeMap<>();
@@ -33,14 +33,17 @@ public class Remove implements Serializable {
         String newID = newBlob.getBlobID();
 
         TreeMap<String, String> originalTreeMap = new TreeMap<>();
-        if (removeFile.exists()) {
-            originalTreeMap = Utils.readObject(removeFile, TreeMap.class);
+        if (REMOVEFILE.exists()) {
+            originalTreeMap = Utils.readObject(REMOVEFILE, TreeMap.class);
         }
 
         //get the masterCommit tree, and judge whether it contains newPath and newBlobID.
         TreeMap commitTree = Repository.getMasterCommit().getTreeMap();
 
-        if (!commitTree.isEmpty() && commitTree.get(newPath) != null && (commitTree.get(newPath).equals(newID) || newID.equals(""))) {
+        if (!commitTree.isEmpty()
+                && commitTree.get(newPath) != null
+                && (commitTree.get(newPath).equals(newID)
+                || newID.equals(""))) {
             if (newID.equals("")) {
                 newID = (String) commitTree.get(newPath);
             }
@@ -64,6 +67,6 @@ public class Remove implements Serializable {
     }
 
     public void saveRemove() {
-        Utils.writeObject(removeFile, this.pathToID);
+        Utils.writeObject(REMOVEFILE, this.pathToID);
     }
 }
