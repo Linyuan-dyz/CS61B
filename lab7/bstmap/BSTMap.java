@@ -3,11 +3,10 @@ package bstmap;
 import java.util.Iterator;
 import java.util.Set;
 
-public class BSTMap<K extends Comparable, V> implements Map61B<K, V>{
+public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>{
 
-    int size;
-
-    BSTNode root;
+    private int size;
+    private BSTNode root;
 
     /** Returns the value corresponding to KEY or null if no such value exists. */
     public V get(K key) {
@@ -42,11 +41,12 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V>{
         } else {
             BSTNode node = root.get(key);
             if (!node.key.equals(key)) {
-                if (key.compareTo(node.key) < 0) {
+                int cmp = key.compareTo((K) node.key);
+                if (cmp < 0) {
                     node.left = new BSTNode<>(key, val, null, null);
                     size += 1;
                 }
-                if (key.compareTo(node.key) > 0) {
+                if (cmp > 0) {
                     node.right = new BSTNode<>(key, val, null, null);
                     size += 1;
                 }
@@ -89,11 +89,14 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V>{
         throw new UnsupportedOperationException();
     }
 
+    public void printOrder() {
+        throw new UnsupportedOperationException();
+    }
+
 
     /** Represents one node in the linked list that stores the key-value pairs
      *  in the dictionary. */
     private class BSTNode<K extends Comparable> {
-
         /** Stores the key of the key-value pair of this node in the list. */
         K key;
         /** Stores the value of the key-value pair of this node in the list. */
