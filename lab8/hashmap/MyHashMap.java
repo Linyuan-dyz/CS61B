@@ -87,7 +87,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * OWN BUCKET DATA STRUCTURES WITH THE NEW OPERATOR!
      */
     protected Collection<Node> createBucket() {
-        return new ArrayList<>();
+        return new LinkedList<>();
     }
 
     /**
@@ -180,24 +180,25 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         }
     }
 
-    private void putOriginAfterResize(Node node) {
+    private void putOriginAfterResize(Node node, Collection<Node>[] newBucket) {
         K key = node.key;
         int keyHashCode = key.hashCode();
         int position = Math.floorMod(keyHashCode, this.initialSize);
-        buckets[position].add(node);
+        newBucket[position].add(node);
     }
 
     private void resize() {
         int currentSize = this.initialSize;
         this.initialSize *= 2;
-        this.buckets = createTable(this.initialSize);
+        Collection<Node>[] newBucket = createTable(this.initialSize);
         for(int i=0; i < currentSize; i++) {
             Iterator bucketIter = buckets[i].iterator();
             while (bucketIter.hasNext()) {
                 Node newNode = (Node) bucketIter.next();
-                putOriginAfterResize(newNode);
+                putOriginAfterResize(newNode, newBucket);
             }
         }
+        this.buckets = newBucket;
     }
 
     @Override
@@ -221,7 +222,11 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * UnsupportedOperationException.
      */
     public V remove(K key) {
-        throw new UnsupportedOperationException();
+        int keyHashCode = key.hashCode();
+        int position = Math.floorMod(keyHashCode, this.initialSize);
+        V val = get(key);
+        buckets[position].remove(getNode(key));
+        return val;
     }
 
     @Override
@@ -231,10 +236,16 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * throw an UnsupportedOperationException.
      */
     public V remove(K key, V value) {
-        throw new UnsupportedOperationException();
+        int keyHashCode = key.hashCode();
+        int position = Math.floorMod(keyHashCode, this.initialSize);
+        V val = get(key);
+        if (val.equals(value)) {
+            buckets[position].remove(getNode(key));
+        }
+        return val;
     }
 
-    public Iterator iterator() {
+    public Iterator<K> iterator() {
         return new myHashMapIter();
     }
 
