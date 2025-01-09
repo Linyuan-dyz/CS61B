@@ -12,6 +12,13 @@ public class RandomWorld {
     public static final int HEIGHT = 30;
     private static Random random = new Random();
 
+    private int currentX;
+    private int currentY;
+    private int destinationX;
+    private int destinationY;
+
+    private final TETile player = Tileset.AVATAR;
+
     public RandomWorld(int seed) {
         this.seed = seed;
         this.random = new Random(seed);
@@ -244,7 +251,7 @@ public class RandomWorld {
                 world[x][y] = Tileset.NOTHING;
             }
         }
-        //generate [150, 200) rooms without hallways.
+        //generate [50, 100) rooms without hallways.
         int roomNum = random.nextInt(50) + 50;
         Rooms[] roomsArray = new Rooms[100];
         int index = 0;
@@ -261,6 +268,66 @@ public class RandomWorld {
         for(int i = 1; i < index; i++) {
             connectTwoRooms(roomsArray[i - 1], roomsArray[i], world);
         }
+
+        generatePlayer(world);
+        generateDestination(world);
     }
+
+    public void updateWorld(TETile[][] world, int newX, int newY) {
+        world[currentX][currentY] = Tileset.GRASS;
+        currentX = newX;
+        currentY = newY;
+        world[currentX][currentY] = this.player;
+    }
+
+    private void generatePlayer(TETile[][] world) {
+        int x = random.nextInt(WIDTH);
+        int y = random.nextInt(HEIGHT);
+        while (true) {
+            if (world[x][y] == Tileset.GRASS) {
+                break;
+            }
+            x = random.nextInt(WIDTH);
+            y = random.nextInt(HEIGHT);
+        }
+        this.currentX = x;
+        this.currentY = y;
+
+        world[currentX][currentY] = this.player;
+    }
+
+    private void generateDestination(TETile[][] world) {
+        int x = random.nextInt(WIDTH);
+        int y = random.nextInt(HEIGHT);
+        while (true) {
+            if (world[x][y] == Tileset.WALL && checkNextToGRASS(x, y, world)) {
+                break;
+            }
+            x = random.nextInt(WIDTH);
+            y = random.nextInt(HEIGHT);
+        }
+        this.destinationX = x;
+        this.destinationY = y;
+
+        world[destinationX][destinationY] = Tileset.FLOWER;
+    }
+
+    private boolean checkNextToGRASS(int x, int y, TETile[][] world) {
+        if (world[x + 1][y] == Tileset.GRASS ||
+                world[x - 1][y] == Tileset.GRASS ||
+                world[x][y + 1] == Tileset.GRASS ||
+                world[x][y - 1] == Tileset.GRASS) {
+            return true;
+        }
+        return false;
+    }
+
+    public int getCurrentX() {return this.currentX;}
+
+    public int getCurrentY() {return this.currentY;}
+
+    public int getDestinationX() {return this.destinationX;}
+
+    public int getDestinationY() {return this.destinationY;}
 
 }
