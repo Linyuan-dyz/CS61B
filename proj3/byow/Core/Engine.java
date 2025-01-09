@@ -2,6 +2,9 @@ package byow.Core;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
+import byow.Core.RandomWorld;
+
+import java.util.Random;
 
 public class Engine {
     TERenderer ter = new TERenderer();
@@ -38,15 +41,58 @@ public class Engine {
      * @return the 2D TETile[][] representing the state of the world
      */
     public TETile[][] interactWithInputString(String input) {
-        // TODO: Fill out this method so that it run the engine using the input
-        // passed in as an argument, and return a 2D tile representation of the
-        // world that would have been drawn if the same inputs had been given
-        // to interactWithKeyboard().
-        //
-        // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
-        // that works for many different input types.
+        /*TODO: Fill out this method so that it run the engine using the input
+         passed in as an argument, and return a 2D tile representation of the
+         world that would have been drawn if the same inputs had been given
+         to interactWithKeyboard().
+
+         See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
+         that works for many different input types.
+        */
+        char[] inputCharArray = input.toCharArray();
+        int seed = getSeed(inputCharArray);
+        int index = getFirstPoint(inputCharArray);
+        int length = input.length();
+
+//        RandomWorld world = new RandomWorld(seed);
+//        TETile[][] generateWorld = world.generateNewWorld();
+//
+//        System.out.println(seed);
+//
+//        for(int i = index; i < length; i++) {
+//            readOperation(inputCharArray[i], generateWorld);
+//        }
 
         TETile[][] finalWorldFrame = null;
         return finalWorldFrame;
+    }
+
+    //return the seed number of the input string.
+    public int getSeed(char[] input) {
+        int seed = 0;
+        int i = 1;
+        if (input[0] == 'N' || input[0] == 'n') {
+            while (input[i] <= '9' && input[i] >= '0') {
+                seed *= 10;
+                seed += input[i] - '0';
+                i += 1;
+            }
+            return seed;
+        }
+        return 0;
+    }
+
+    //return the index that point to the first instruction.
+    public int getFirstPoint(char[] input) {
+        int index = 0;
+        //index now point to S in "N####S"
+        while (input[index] != 's' && input[index] != 'S') {
+            index += 1;
+        }
+        return index + 1;
+    }
+
+    private void readOperation(char operation, TETile[][] world) {
+
     }
 }
