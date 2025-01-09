@@ -49,21 +49,22 @@ public class Engine {
          See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
          that works for many different input types.
         */
+        ter.initialize(WIDTH, HEIGHT);
         char[] inputCharArray = input.toCharArray();
         int seed = getSeed(inputCharArray);
         int index = getFirstPoint(inputCharArray);
         int length = input.length();
 
-//        RandomWorld world = new RandomWorld(seed);
-//        TETile[][] generateWorld = world.generateNewWorld();
-//
-//        System.out.println(seed);
-//
-//        for(int i = index; i < length; i++) {
-//            readOperation(inputCharArray[i], generateWorld);
-//        }
+        RandomWorld world = new RandomWorld(seed);
+        TETile[][] generateWorld = new TETile[WIDTH][HEIGHT];
+        world.generateNewWorld(generateWorld);
+        ter.renderFrame(generateWorld);
 
-        TETile[][] finalWorldFrame = null;
+        for(int i = index; i < length; i++) {
+            readOperation(inputCharArray[i], generateWorld);
+        }
+
+        TETile[][] finalWorldFrame = generateWorld;
         return finalWorldFrame;
     }
 

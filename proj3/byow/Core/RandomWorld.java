@@ -10,10 +10,11 @@ public class RandomWorld {
     private int seed;
     public static final int WIDTH = 80;
     public static final int HEIGHT = 30;
-    private static final Random random = new Random();
+    private static Random random = new Random();
 
     public RandomWorld(int seed) {
         this.seed = seed;
+        this.random = new Random(seed);
     }
 
     //generate a new random room, if this room crash the lines, fix it.
@@ -236,7 +237,7 @@ public class RandomWorld {
         return true;
     }
 
-    public static void generateNewWorld(TETile[][] world) {
+    public void generateNewWorld(TETile[][] world) {
         //initialize a new world with NOTHING.
         for(int x = 0; x < WIDTH; x++) {
             for(int y = 0; y < HEIGHT; y++) {
@@ -244,7 +245,7 @@ public class RandomWorld {
             }
         }
         //generate [150, 200) rooms without hallways.
-        int roomNum = random.nextInt(150) + 50;
+        int roomNum = random.nextInt(50) + 50;
         Rooms[] roomsArray = new Rooms[100];
         int index = 0;
         for(int num = 0; num <= roomNum; num++) {
@@ -262,13 +263,4 @@ public class RandomWorld {
         }
     }
 
-    public static void main(String[] args) {
-        TERenderer ter = new TERenderer();
-        ter.initialize(WIDTH, HEIGHT);
-
-        TETile[][] world = new TETile[WIDTH][HEIGHT];
-        generateNewWorld(world);
-
-        ter.renderFrame(world);
-    }
 }
